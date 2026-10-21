@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import "./components.css";
 import "./brand.css";
+import LanguageProvider from "@/components/language-provider";
 
 export const metadata: Metadata = {
   title: "CoC Research | ผลงานทางวิชาการ",
@@ -10,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  return <html lang="th"><body>{children}</body></html>;
+  return <html lang="th"><body><LanguageProvider>{children}</LanguageProvider></body></html>;
 }

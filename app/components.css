@@ -1,4 +1,24 @@
 /* React components retain the original dashboard design. */
+.header-actions { display: flex; align-items: center; gap: 16px; margin-left: auto; }
+.header-actions > .tag { margin: 0; }
+.language-switcher { display: flex; align-items: center; gap: 5px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: #fff; flex-shrink: 0; margin-left: auto; }
+.language-switcher button { display: grid; place-items: center; padding: 5px; border: 2px solid transparent; border-radius: 5px; background: transparent; min-width: 39px; min-height: 34px; }
+.language-switcher button[aria-pressed="true"] { border-color: var(--brand-ink); background: var(--brand-soft); }
+.language-switcher button:hover { background: #edf8fa; }
+.language-switcher svg { display: block; width: 27px; height: 18px; border-radius: 2px; box-shadow: 0 0 0 1px #003c7114; }
+.publication-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin: -2px 0 20px; padding: 14px; background: #f4f9fc; border: 1px solid var(--border); border-radius: 8px; }
+.sort-control { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.sort-control select { margin: 0; width: auto; min-width: 185px; }
+.table-faculty-picker { min-width: 220px; }
+.table-faculty-picker summary { background: white; }
+.table-picker-panel { position: absolute; left: 0; top: calc(100% + 8px); z-index: 12; width: min(370px, 75vw); padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff; box-shadow: 0 12px 35px #003c7120; }
+.publications .table-picker-panel > input { min-width: 0; width: 100%; margin-bottom: 8px; }
+.table-picker-list { max-height: 285px; overflow-y: auto; margin: 8px 0; }
+.table-picker-list label { display: flex; align-items: center; gap: 8px; padding: 7px 2px; font-size: 11px; }
+.publications .table-picker-list input { min-width: 0; width: auto; }
+.table-picker-panel p { font-size: 10px; }
+@media (max-width: 760px) { .sort-control { margin-left: 0; flex-wrap: wrap; } .publication-toolbar { gap: 12px; } .header-actions { gap: 7px; } .faculty-page .faculty-header-brand { display: none; } .language-switcher button { min-width: 36px; } }
+@media (max-width: 400px) { .mobile-brand img { max-width: 145px; } }
 .staffpopup { position: absolute; z-index: 10; top: calc(100% + 8px); left: 0; width: min(340px, 80vw); padding: 10px; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 30px #233d3620; }
 details[open] { box-shadow: none; }
 #stafflist { max-height: 280px; overflow-y: auto; }

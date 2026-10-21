@@ -1,28 +1,40 @@
 "use client";
-
+import { useLanguage } from "./language-provider";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { facultyHref } from "@/lib/faculty";
-import { programmeLabel, TYPE_LABELS, Work, yearLabel } from "@/lib/analytics";
-
-interface Props { works: Work[]; query: string; onSearch: (query: string) => void; sort: number; onSort: () => void }
-
-export default function PublicationTable({ works, query, onSearch, sort, onSort }: Props) {
-  const [page, setPage] = useState(1);
-  const [detail, setDetail] = useState<Work | null>(null);
-  const dialog = useRef<HTMLDialogElement>(null);
-  const pages = Math.max(1, Math.ceil(works.length / 10));
-  const currentPage = Math.min(page, pages);
-  useEffect(() => { setPage(1); }, [works]);
-  useEffect(() => { if (detail && !dialog.current?.open) dialog.current?.showModal(); }, [detail]);
-  function close() { dialog.current?.close(); setDetail(null); }
-  return <>
-    <section className="card publications" id="publications"><div className="cardhead"><div><h2>สำรวจรายการผลงาน <span>({works.length.toLocaleString("en-US")})</span></h2><p>คลิกรายการเพื่ออ่านรายละเอียดและดูผู้เขียนที่เกี่ยวข้อง</p></div><input value={query} onChange={e => onSearch(e.target.value)} placeholder="ค้นหาผลงาน หรือชื่ออาจารย์…" aria-label="ค้นหารายการผลงาน" /></div>
-      <div className="tablewrap"><table><thead><tr><th aria-sort={sort === -1 ? "descending" : "ascending"}><button className="textbtn" onClick={onSort}>ปีเผยแพร่ {sort === -1 ? "↓" : "↑"}</button></th><th>รายละเอียดผลงาน</th><th>อาจารย์ / หลักสูตร</th><th>ประเภท / ฐานดัชนี</th></tr></thead><tbody>
-        {works.slice((currentPage - 1) * 10, currentPage * 10).map(work => <tr key={work.id}><td><b>{work.year + 543}</b><small>{work.year}</small></td><td><button className="pubtitle" onClick={() => setDetail(work)}>{work.detail}</button></td><td>{work.authors.map(author => <div key={author}><Link className="faculty-link" href={facultyHref(author)}>{author}</Link></div>)}<small>{work.programmes.map(programmeLabel).join(", ")}</small></td><td>{TYPE_LABELS[work.type] || work.type}<small><span className="badge">{work.index || "ไม่ระบุ"}</span></small></td></tr>)}
-        {!works.length && <tr><td colSpan={4} className="empty">ไม่พบรายการที่ตรงกับตัวกรอง</td></tr>}
-      </tbody></table></div><div className="pagination"><span aria-live="polite">หน้า {currentPage} / {pages} · {works.length} รายการ</span><div><button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>← ก่อนหน้า</button><button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)}>ถัดไป →</button></div></div>
+import { TYPE_LABELS, Work } from "@/lib/analytics";
+import type { PublicationSort } from "@/lib/publication-sort";
+import FacultyPicker from "./faculty-picker";
+interface Props {
+    works: Work[];
+    query: string;
+    onSearch: (query: string) => void;
+    sort: PublicationSort;
+    onSort: (sort: PublicationSort) => void;
+    staff: string[];
+    selected: Set<string>;
+    onSelect: (names: Set<string>) => void;
+}
+export default function PublicationTable({ works, query, onSearch, sort, onSort, staff, selected, onSelect }: Props) {
+    const { t, language, yearLabel: formatYear, programmeLabel: displayProgramme } = useLanguage();
+    const [page, setPage] = useState(1);
+    const [detail, setDetail] = useState<Work | null>(null);
+    const dialog = useRef<HTMLDialogElement>(null);
+    const pages = Math.max(1, Math.ceil(works.length / 10));
+    const currentPage = Math.min(page, pages);
+    useEffect(() => { setPage(1); }, [works]);
+    useEffect(() => { if (detail && !dialog.current?.open)
+        dialog.current?.showModal(); }, [detail]);
+    function close() { dialog.current?.close(); setDetail(null); }
+    return <>
+    <section className="card publications" id="publications"><div className="cardhead"><div><h2>{t("สำรวจรายการผลงาน ")}<span>({works.length.toLocaleString("en-US")})</span></h2><p>{t("คลิกรายการเพื่ออ่านรายละเอียดและดูผู้เขียนที่เกี่ยวข้อง")}</p></div><input value={query} onChange={e => onSearch(e.target.value)} placeholder={t("ค้นหาผลงาน หรือชื่ออาจารย์…")} aria-label={t("ค้นหารายการผลงาน")}/></div>
+      <div className="publication-toolbar"><FacultyPicker staff={staff} selected={selected} onSelect={onSelect}/><label className="sort-control">{t("เรียงลำดับ")}<select value={sort} onChange={e => onSort(e.target.value as PublicationSort)}><option value="newest">{t("ปีล่าสุดก่อน")}</option><option value="oldest">{t("ปีเก่าสุดก่อน")}</option><option value="title-asc">{t("ชื่อผลงาน A–Z")}</option><option value="title-desc">{t("ชื่อผลงาน Z–A")}</option><option value="author-asc">{t("ชื่ออาจารย์ A–Z")}</option><option value="author-desc">{t("ชื่ออาจารย์ Z–A")}</option></select></label></div>
+      <div className="tablewrap"><table><thead><tr><th aria-sort={sort === "newest" ? "descending" : sort === "oldest" ? "ascending" : "none"}><button className="textbtn" onClick={() => onSort(sort === "newest" ? "oldest" : "newest")}>{t("ปีเผยแพร่ ")}{sort === "newest" ? "↓" : sort === "oldest" ? "↑" : "↕"}</button></th><th>{t("รายละเอียดผลงาน")}</th><th>{t("อาจารย์ / หลักสูตร")}</th><th>{t("ประเภท / ฐานดัชนี")}</th></tr></thead><tbody>
+        {works.slice((currentPage - 1) * 10, currentPage * 10).map(work => <tr key={work.id}><td><b>{language === "th" ? work.year + 543 : work.year}</b><small>{language === "th" ? work.year : `BE ${work.year + 543}`}</small></td><td><button className="pubtitle" onClick={() => setDetail(work)}>{work.detail}</button></td><td>{work.authors.map(author => <div key={author}><Link className="faculty-link" href={facultyHref(author)}>{author}</Link></div>)}<small>{work.programmes.map(displayProgramme).join(", ")}</small></td><td>{t(TYPE_LABELS[work.type]) || work.type}<small><span className="badge">{work.index || t("ไม่ระบุ")}</span></small></td></tr>)}
+        {!works.length && <tr><td colSpan={4} className="empty">{t("ไม่พบรายการที่ตรงกับตัวกรอง")}</td></tr>}
+      </tbody></table></div><div className="pagination"><span aria-live="polite">{t("หน้า ")}{currentPage} / {pages} · {works.length}{t(" รายการ")}</span><div><button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>{t("← ก่อนหน้า")}</button><button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)}>{t("ถัดไป →")}</button></div></div>
     </section>
-    <dialog ref={dialog} aria-labelledby="detail-title" onCancel={() => setDetail(null)} onClose={() => setDetail(null)}><button className="textbtn close-detail" onClick={close}>ปิด ✕</button>{detail && <><h2 id="detail-title">{TYPE_LABELS[detail.type] || detail.type} · {yearLabel(detail.year)}</h2><p>{detail.detail}</p><p><b>อาจารย์:</b> {detail.authors.map((author, i) => <span key={author}>{i > 0 && ", "}<Link className="faculty-link" href={facultyHref(author)}>{author}</Link></span>)}<br /><b>หลักสูตร:</b> {detail.programmes.map(programmeLabel).join(", ")}<br /><b>ฐานดัชนี:</b> {detail.index || "ไม่ระบุ"}<br /><b>สังกัด PSU ตามรายการต้นฉบับ:</b> {detail.psu || "ไม่ระบุ"}</p></>}</dialog>
+    <dialog ref={dialog} aria-labelledby="detail-title" onCancel={() => setDetail(null)} onClose={() => setDetail(null)}><button className="textbtn close-detail" onClick={close}>{t("ปิด ✕")}</button>{detail && <><h2 id="detail-title">{t(TYPE_LABELS[detail.type]) || detail.type} · {formatYear(detail.year)}</h2><p>{detail.detail}</p><p><b>{t("อาจารย์:")}</b> {detail.authors.map((author, i) => <span key={author}>{i > 0 && ", "}<Link className="faculty-link" href={facultyHref(author)}>{author}</Link></span>)}<br /><b>{t("หลักสูตร:")}</b> {detail.programmes.map(displayProgramme).join(", ")}<br /><b>{t("ฐานดัชนี:")}</b> {detail.index || t("ไม่ระบุ")}<br /><b>{t("สังกัด PSU ตามรายการต้นฉบับ:")}</b> {detail.psu || t("ไม่ระบุ")}</p></>}</dialog>
   </>;
 }
