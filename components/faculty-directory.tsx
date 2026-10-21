@@ -3,7 +3,7 @@ import { useLanguage } from "./language-provider";
 import { useState } from "react";
 import Link from "next/link";
 import { normalize, type ResearchData } from "@/lib/analytics";
-import { facultyHref, facultyNames, facultyRecords, type Portrait } from "@/lib/faculty";
+import { facultyHref, facultyRecords, type Portrait } from "@/lib/faculty";
 import { canonicalFacultyName } from "@/lib/faculty-identity";
 import FacultyPortrait from "./faculty-portrait";
 export default function FacultyDirectory({ data, portraits }: {
@@ -12,7 +12,7 @@ export default function FacultyDirectory({ data, portraits }: {
 }) {
     const { t, language } = useLanguage();
     const [query, setQuery] = useState("");
-    const names = facultyNames(data).filter(name => normalize(`${name} ${portraits[name]?.thaiName ?? ""}`).includes(normalize(query)));
+    const names = data.staff.map(person => canonicalFacultyName(person.name)).filter(name => normalize(`${name} ${portraits[name]?.thaiName ?? ""}`).includes(normalize(query)));
     const card = (name: string) => {
         const count = facultyRecords(data, name).length;
         const original = data.staff.find(row => canonicalFacultyName(row.name) === name)?.name;
