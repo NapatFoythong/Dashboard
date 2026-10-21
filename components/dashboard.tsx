@@ -7,15 +7,16 @@ import PublicationTable from "./publication-table";
 import SidebarNav from "./sidebar-nav";
 import FacultyDirectory from "./faculty-directory";
 import portraits from "@/data/staff-portraits.json";
+import { canonicalFacultyName } from "@/lib/faculty-identity";
 import { countWorks, DEFAULT_FILTERS, exportCsv, filterRecords, Filters as FilterValues, groupedCounts, GroupMode, prepareRecords, ResearchData, searchWorks, unique } from "@/lib/analytics";
 
 export default function Dashboard({ data }: { data: ResearchData }) {
   const records = useMemo(() => prepareRecords(data), [data]);
-  const staff = useMemo(() => unique([...data.staff.map(person => person.name), ...records.map(row => row.name)]).sort(), [data, records]);
+  const staff = useMemo(() => unique([...data.staff.map(person => canonicalFacultyName(person.name)), ...records.map(row => row.name)]).sort(), [data, records]);
   const programmes = useMemo(() => unique(records.flatMap(row => row.programmes)).sort(), [records]);
   const indexes = useMemo(() => unique(records.map(row => row.index)).sort(), [records]);
   const years = useMemo(() => { const values = records.map(row => row.year); const first = Math.min(...values); return Array.from({ length: Math.max(...values) - first + 1 }, (_, i) => first + i); }, [records]);
-  const unmatched = useMemo(() => { const names = new Set(data.staff.map(person => person.name)); return unique(records.filter(row => !names.has(row.name)).map(row => row.name)); }, [data, records]);
+  const unmatched = useMemo(() => { const names = new Set(data.staff.map(person => canonicalFacultyName(person.name))); return unique(records.filter(row => !names.has(canonicalFacultyName(row.name))).map(row => row.name)); }, [data, records]);
   const [filters, setFilters] = useState<FilterValues>({ ...DEFAULT_FILTERS });
   const [selected, setSelected] = useState(() => new Set(staff));
   const [group, setGroup] = useState<GroupMode>("total");

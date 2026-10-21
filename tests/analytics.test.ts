@@ -4,6 +4,7 @@ import test from "node:test";
 import { countWorks, DEFAULT_FILTERS, exportCsv, filterRecords, groupedCounts, prepareRecords, searchWorks } from "../lib/analytics.ts";
 import type { ResearchData } from "../lib/analytics.ts";
 import { facultyNames, facultyRecords, facultySlug } from "../lib/faculty.ts";
+import { canonicalFacultyName } from "../lib/faculty-identity.ts";
 
 const data: ResearchData = JSON.parse(readFileSync(new URL("../data/research.json", import.meta.url), "utf8").replace(/^\uFEFF/, ""));
 const records = prepareRecords(data);
@@ -69,7 +70,7 @@ test("SSR and client ordering does not depend on localeCompare", () => {
 
 test("faculty pages preserve every CSV row under its exact author name", () => {
   const names = facultyNames(data);
-  assert.equal(names.length, 45);
+  assert.equal(names.length, 44);
   assert.equal(new Set(names.map(facultySlug)).size, names.length);
   const allIds: number[] = [];
   for (const name of names) {
@@ -90,8 +91,10 @@ test("faculty pages preserve every CSV row under its exact author name", () => {
   }
   assert.equal(allIds.length, 717);
   assert.equal(new Set(allIds).size, 717);
-  assert.equal(facultyRecords(data, "MONCHANOK").length, 0);
+  assert.equal(facultyRecords(data, "MONCHANOK").length, 1);
   assert.equal(facultyRecords(data, "MONCHANOK THONGTHEP").length, 1);
+  assert.deepEqual(facultyRecords(data, "MONCHANOK"), facultyRecords(data, "MONCHANOK THONGTHEP"));
+  assert.deepEqual(facultyRecords(data, "MONCHANOK")[0].programmes, ["DBiz"]);
 });
 
 test("portrait mapping uses verified full names and existing local files", () => {
@@ -103,4 +106,8 @@ test("portrait mapping uses verified full names and existing local files", () =>
     assert(portrait.cv.startsWith("https://computing.psu.ac.th/cv/index?encode_id="));
     assert(readFileSync(new URL(`../public${portrait.image}`, import.meta.url)).length > 1000);
   }
+  const roster = data.staff.map(row => canonicalFacultyName(row.name));
+  assert.equal(new Set(roster).size, 34);
+  assert(roster.every(name => portraits[name]), "Every Excel staff member must have a verified portrait");
+  assert.equal(roster.filter(name => !facultyRecords(data, name).length).length, 5);
 });

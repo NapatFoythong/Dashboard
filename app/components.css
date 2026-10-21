@@ -11,6 +11,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .staff-option { border-bottom: 1px solid var(--border); padding-bottom: 6px; }
 .staff-option > a { display: block; padding: 0 12px 0 34px; font-size: 10px; }
 .faculty-directory { margin-bottom: 24px; }
+.additional-faculty { margin-top: 22px; }
+.additional-faculty p { margin: 12px 0; }
 .faculty-directory input { font-size: 12px; }
 .faculty-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-height: 460px; overflow-y: auto; }
 .faculty-person { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: var(--ink); }

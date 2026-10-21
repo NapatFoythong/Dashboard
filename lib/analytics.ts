@@ -1,3 +1,5 @@
+import { canonicalFacultyName } from "./faculty-identity.ts";
+
 export interface SourcePublication {
   name: string;
   type: string;
@@ -48,10 +50,10 @@ export const unique = <T,>(values: T[]): T[] => [...new Set(values)];
 export const compareText = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
 
 export function prepareRecords(data: ResearchData): Publication[] {
-  const mapping = new Map(data.staff.map(person => [person.name, person.programmes]));
+  const mapping = new Map(data.staff.map(person => [canonicalFacultyName(person.name), person.programmes]));
   return data.publications.map((row, id) => ({
     ...row, id, year: Number(row.year), index: row.index.trim(),
-    programmes: mapping.get(row.name) ?? ["ยังไม่ระบุหลักสูตร"],
+    programmes: mapping.get(canonicalFacultyName(row.name)) ?? ["ยังไม่ระบุหลักสูตร"],
   }));
 }
 

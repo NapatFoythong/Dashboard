@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { canonicalFacultyName } from "../lib/faculty-identity.ts";
 
 const base = process.argv[2] || "http://localhost:3100";
 const data = JSON.parse(await readFile("data/research.json", "utf8"));
 const portraits = JSON.parse(await readFile("data/staff-portraits.json", "utf8"));
 const names = [...new Set([...data.staff.map(row => row.name), ...data.publications.map(row => row.name)])];
 const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-for (const name of names) {
-  const response = await fetch(`${base}/faculty/${slug(name)}/`);
+for (const originalName of names) {
+  const name = canonicalFacultyName(originalName);
+  const response = await fetch(`${base}/faculty/${slug(originalName)}/`);
   assert.equal(response.status, 200, name);
   const html = await response.text();
   assert(html.includes(`<h1>${name}</h1>`), name);
