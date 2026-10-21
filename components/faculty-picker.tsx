@@ -17,7 +17,7 @@ export default function FacultyPicker({ staff, selected, onSelect }: {
         next.add(name);
     else
         next.delete(name); onSelect(next); }}/>{name}</label>)}{!matching.length && <p>{t("ไม่พบอาจารย์ที่ตรงกับคำค้นหา")}</p>}</div>
-      <p>{t("ใช้รายชื่อที่เลือกเดียวกับตัวกรองภาพรวม")}</p>
+      <p>{t("ใช้รายชื่อเดียวกับตัวกรองด้านบน")}</p>
     </div>
   </details>;
 }

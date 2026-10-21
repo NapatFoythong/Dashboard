@@ -1,6 +1,14 @@
 export type Language = "th" | "en";
 
 export const EN_MESSAGES: Record<string, string> = {
+  "ผลงานของเรา": "Our publications",
+  "ใช้รายชื่อเดียวกับตัวกรองด้านบน": "Shares the faculty selection with the filters above.",
+  "ประเภทผลงาน A–Z": "Publication type A–Z",
+  "ประเภทผลงาน Z–A": "Publication type Z–A",
+  "เลือกประเภทผลงาน": "Choose a publication type",
+  "รวมผลงานทุกปีจาก CSV เลือกประเภทเพื่อสำรวจและกดรายการเพื่ออ่านรายละเอียด": "Explore CSV publications across all years. Choose a type and select a publication to read its details.",
+  "เริ่มต้นจากรายชื่อ Excel 34 คน เลือกอาจารย์เพิ่มเติมจาก CSV ได้ในตัวกรอง": "Starts with the 34 faculty members in Excel. Additional CSV authors can be selected in the filters.",
+  "ข้อมูลผลงานจากไฟล์ CSV เดือนตุลาคม 2025": "Publication data from the October 2025 CSV file",
   " · จับคู่ชื่อเต็มจาก CSV และ CV ทางการแล้ว": " · Full name verified against the CSV and official CV",
   " คน · ชื่อในไฟล์ผลงานที่ยังจับคู่หลักสูตรไม่ได้ ": " people · Authors without a programme match: ",
   " จากทั้งหมด ": " of ",
