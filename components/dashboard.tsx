@@ -1,7 +1,6 @@
 "use client";
 import { useLanguage } from "./language-provider";
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import Filters from "./filters";
 import { RankedBars, TrendChart, TypeChart } from "./charts";
 import PublicationTable from "./publication-table";
@@ -52,7 +51,6 @@ export default function Dashboard({ data }: {
     <aside><CocBrand /><div className="navlabel">RESEARCH WORKSPACE</div><SidebarNav /><div className="asidefoot"><span className="dot"/>{t("ข้อมูลจากไฟล์ที่นำเข้า")}<small>{t("Publications CV · ตุลาคม 2025")}</small></div></aside>
     <main id="overview"><header><div className="desktop-breadcrumb">{t("วิทยาลัยการคอมพิวเตอร์ ")}<span>/</span>{t(" ภาพรวมผลงานวิจัย")}</div><CocBrand className="mobile-brand"/><div className="header-actions"><span className="tag">RESEARCH ANALYTICS</span><LanguageSwitcher /></div></header>
       <section className="heading"><div><p className="eyebrow">ACADEMIC PERFORMANCE</p><h1>{t("ผลงานทางวิชาการของอาจารย์")}</h1><p>{t("สำรวจผลงานวิจัย เชื่อมโยงข้อมูล และติดตามแนวโน้มของวิทยาลัยการคอมพิวเตอร์")}</p></div><button id="export" onClick={download}>{t("↓ ส่งออก CSV")}</button></section>
-      <Link href="/our-work/" className="button-link mobile-collection-link">{t("ผลงานของเรา")} ↗</Link>
       <Filters filters={filters} years={years} programmes={programmes} indexes={indexes} staff={staff} selected={selected} onChange={setFilters} onSelect={setSelected} onReset={reset}/>
       <div className="stats" aria-live="polite">{statistics.map(stat => <div className="stat" key={stat.title}><label>{stat.title}</label><strong>{stat.value.toLocaleString("en-US")}</strong><small>{stat.note}</small></div>)}</div>
       <div className="charts"><section className="card trend"><div className="cardhead"><div><h2>{t("แนวโน้มผลงานทางวิชาการ")}</h2><p>{t("จำนวนผลงานในแต่ละปีตามตัวกรองที่เลือก")}</p></div><select value={group} onChange={e => setGroup(e.target.value as GroupMode)} aria-label={t("แยกกราฟตาม")}><option value="total">{t("ผลงานรวม")}</option><option value="type">{t("แยกตามประเภท")}</option><option value="programme">{t("แยกตามหลักสูตร")}</option></select></div><TrendChart records={raw} start={filters.start} end={filters.end} mode={filters.count} group={group}/></section>

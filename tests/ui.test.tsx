@@ -9,7 +9,6 @@ import ts from "typescript";
 import Dashboard from "../components/dashboard";
 import LanguageProvider from "../components/language-provider";
 import FacultyProfile from "../components/faculty-profile";
-import OurWork from "../components/our-work";
 import { facultyRecords } from "../lib/faculty.ts";
 import { EN_MESSAGES, translate } from "../lib/i18n.ts";
 import { orderWorks } from "../lib/publication-sort.ts";
@@ -69,8 +68,6 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
   }
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
   Object.defineProperty(globalThis, "self", { configurable: true, value: dom.window });
-  Object.defineProperty(dom.window.HTMLDialogElement.prototype, "showModal", { configurable: true, value: function () { this.open = true; } });
-  Object.defineProperty(dom.window.HTMLDialogElement.prototype, "close", { configurable: true, value: function () { this.open = false; this.dispatchEvent(new dom.window.Event("close")); } });
   const container = document.getElementById("root")!;
   const app = <LanguageProvider><Dashboard data={data} /></LanguageProvider>;
   let root = createRoot(container);
@@ -133,28 +130,6 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     assert(container.querySelector(".faculty-works h2")!.textContent!.startsWith("Publications by"));
     assert.equal(container.querySelector(".work-detail")!.textContent, facultyRows[0].detail, "CSV publication text must remain unchanged in English");
     assert.equal(container.querySelector('button[aria-label="English"]')!.getAttribute("aria-pressed"), "true");
-    await act(async () => { root.render(<LanguageProvider><OurWork data={data} /></LanguageProvider>); });
-    assert.equal(container.querySelector("h1")!.textContent, "Our publications");
-    assert.equal(container.querySelector('nav a[aria-current="page"]')!.getAttribute("aria-current"), "page");
-    assert.equal(container.querySelectorAll('#stafflist input:checked').length, 34);
-    const categoryButtons = container.querySelectorAll('.work-categories button');
-    assert.equal(categoryButtons.length, 5);
-    await click(categoryButtons[2]);
-    const collection = container.querySelector('#publications')!;
-    assert([...collection.querySelectorAll('tbody tr td:last-child')].every(element => element.textContent!.startsWith("International proceedings")));
-    const publication = collection.querySelector('.pubtitle')!;
-    const fullDetail = publication.textContent;
-    await click(publication);
-    const modal = container.querySelector('dialog')!;
-    assert(modal.open);
-    assert.equal(modal.querySelector('p')!.textContent, fullDetail);
-    assert(modal.querySelector('a[href^="/faculty/"]'));
-    await click(modal.querySelector('.close-detail'));
-    assert(!modal.open);
-    await click(categoryButtons[0]);
-    const categorySort = collection.querySelector('.sort-control select') as HTMLSelectElement;
-    await act(async () => { categorySort.value = "type-desc"; categorySort.dispatchEvent(new dom.window.Event("change", { bubbles: true })); });
-    assert.equal(categorySort.value, "type-desc");
   } finally {
     await act(async () => { root.unmount(); });
     dom.window.close();
