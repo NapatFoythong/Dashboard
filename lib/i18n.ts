@@ -14,7 +14,7 @@ export const EN_MESSAGES: Record<string, string> = {
   " โดยคงชื่อเดิมไว้และไม่จับคู่ชื่อที่ไม่ครบโดยอัตโนมัติ": ". Original names are retained; incomplete names are not matched automatically.",
   "Publications CV · ตุลาคม 2025": "Publications CV · October 2025",
   "{0} คน": "{0} selected",
-  "{0} รายการจาก CSV": "{0} CSV records",
+  "มีผลงาน {0} ผลงาน": "{0} publications",
   "{0}% ของผลงานที่แสดง": "{0}% of displayed publications",
   "กราฟจำนวนผลงานรายปี": "Annual publication counts",
   "กรุณาเลือกปีเริ่มต้นไม่เกินปีสิ้นสุด": "The start year must not be later than the end year.",
