@@ -43,6 +43,10 @@ export const yearLabel = (year: number) => `${year + 543} (${year})`;
 export const programmeLabel = (value: string) => value === "DE" ? "DE / AISE" : value;
 export const unique = <T,>(values: T[]): T[] => [...new Set(values)];
 
+// SSR and browsers may use different default locales/ICU versions.
+// Code-unit ordering is deterministic in both environments.
+export const compareText = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
+
 export function prepareRecords(data: ResearchData): Publication[] {
   const mapping = new Map(data.staff.map(person => [person.name, person.programmes]));
   return data.publications.map((row, id) => ({
@@ -79,14 +83,14 @@ export function countWorks(rows: Publication[], mode: CountMode): Work[] {
 export function searchWorks(works: Work[], query: string, sort: number): Work[] {
   const q = normalize(query);
   return works.filter(row => normalize(`${row.detail} ${row.authors.join(" ")}`).includes(q))
-    .sort((a, b) => sort * (a.year - b.year) || a.detail.localeCompare(b.detail));
+    .sort((a, b) => sort * (a.year - b.year) || compareText(a.detail, b.detail) || a.id - b.id);
 }
 
 export function groupedCounts(records: Publication[], group: "name" | "programme", mode: CountMode) {
   const keys = unique(records.flatMap(row => group === "name" ? [row.name] : row.programmes));
   return keys.map(key => ({ key, count: countWorks(records.filter(row =>
     group === "name" ? row.name === key : row.programmes.includes(key)), mode).length }))
-    .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
+    .sort((a, b) => b.count - a.count || compareText(a.key, b.key));
 }
 
 export function exportCsv(works: Work[]): string {

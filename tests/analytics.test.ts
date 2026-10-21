@@ -43,3 +43,25 @@ test("search, ordering, missing programme and CSV quoting remain usable", () => 
   assert(csv.startsWith("\uFEFF"));
   assert(csv.includes('"\'=HYPERLINK(""x"")"'));
 });
+
+test("SSR and client ordering does not depend on localeCompare", () => {
+  const works = countWorks(filtered, "unique");
+  const expectedWorks = searchWorks(works, "", -1).map(row => row.id);
+  const expectedRanks = groupedCounts(filtered, "name", "unique");
+  const original = String.prototype.localeCompare;
+  try {
+    // Simulate a runtime with a different collator (server vs browser).
+    String.prototype.localeCompare = function (other: string) {
+      return String(this) < other ? 1 : String(this) > other ? -1 : 0;
+    };
+    assert.deepEqual(searchWorks(works, "", -1).map(row => row.id), expectedWorks);
+    assert.deepEqual(groupedCounts(filtered, "name", "unique"), expectedRanks);
+    const fixture = [
+      { ...works[0], id: 2, detail: "Adam Caulfield", year: 2024 },
+      { ...works[0], id: 1, detail: "A. Heednacram", year: 2024 },
+    ];
+    assert.deepEqual(searchWorks(fixture, "", -1).map(row => row.id), [1, 2]);
+  } finally {
+    String.prototype.localeCompare = original;
+  }
+});
