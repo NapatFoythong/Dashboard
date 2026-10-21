@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { facultyHref } from "@/lib/faculty";
 import { CountMode, Filters as FilterValues, normalize, programmeLabel, TYPE_LABELS, yearLabel } from "@/lib/analytics";
 
 interface Props {
@@ -34,7 +36,7 @@ export default function Filters({ filters, years, programmes, indexes, staff, se
       <details id="staffpicker"><summary>เลือกอาจารย์ <span>{selected.size === staff.length ? "ทุกคน" : `${selected.size} คน`}</span> ▾</summary><div className="staffpopup">
         <input id="staffsearch" value={staffSearch} onChange={e => setStaffSearch(e.target.value)} placeholder="ค้นหาชื่ออาจารย์…" aria-label="ค้นหาอาจารย์" />
         <div className="staffactions"><button onClick={() => onSelect(new Set(staff))}>เลือกทั้งหมด</button><button onClick={() => onSelect(new Set())}>ยกเลิกทั้งหมด</button></div>
-        <div id="stafflist">{staff.filter(name => normalize(name).includes(normalize(staffSearch))).map(name => <label key={name}><input type="checkbox" checked={selected.has(name)} onChange={e => { const next = new Set(selected); if (e.target.checked) next.add(name); else next.delete(name); onSelect(next); }} />{name}</label>)}</div>
+        <div id="stafflist">{staff.filter(name => normalize(name).includes(normalize(staffSearch))).map(name => <div className="staff-option" key={name}><label><input type="checkbox" checked={selected.has(name)} onChange={e => { const next = new Set(selected); if (e.target.checked) next.add(name); else next.delete(name); onSelect(next); }} />{name}</label><Link href={facultyHref(name)} className="faculty-link" aria-label={`ดูผลงานของ ${name}`}>ดูผลงาน ↗</Link></div>)}</div>
       </div></details>
       <label className="check"><input type="checkbox" checked={filters.psu} onChange={e => update("psu", e.target.checked)} />เฉพาะผลงานที่ระบุสังกัด PSU</label>
       <span className="period">พ.ศ. {filters.start + 543} – {filters.end + 543}</span>

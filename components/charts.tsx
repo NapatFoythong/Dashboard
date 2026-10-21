@@ -1,4 +1,6 @@
 import { Fragment } from "react";
+import Link from "next/link";
+import { facultyHref } from "@/lib/faculty";
 import { COLORS, CountMode, countWorks, GroupMode, programmeLabel, Publication, TYPE_LABELS, unique, Work } from "@/lib/analytics";
 
 interface TrendProps { records: Publication[]; start: number; end: number; mode: CountMode; group: GroupMode }
@@ -34,5 +36,5 @@ export function TypeChart({ works }: { works: Work[] }) {
 
 export function RankedBars({ values, faculty = false }: { values: { key: string; count: number }[]; faculty?: boolean }) {
   if (!values.length) return <p>ไม่พบข้อมูล</p>;
-  return values.map(({ key, count }, i) => faculty ? <div className="rank" key={key}><span className="ranknum">{String(i + 1).padStart(2, "0")}</span><div className="ranklabel">{key}<div className="bar"><i style={{ width: `${count / values[0].count * 100}%` }} /></div></div><b>{count}</b></div> : <Fragment key={key}><div className="programrow"><div><span>{programmeLabel(key)}</span><b>{count} <small>ผลงาน</small></b></div><div className="bar"><i style={{ width: `${count / values[0].count * 100}%`, background: COLORS[i % COLORS.length] }} /></div></div></Fragment>);
+  return values.map(({ key, count }, i) => faculty ? <div className="rank" key={key}><span className="ranknum">{String(i + 1).padStart(2, "0")}</span><div className="ranklabel"><Link className="faculty-link" href={facultyHref(key)}>{key}</Link><div className="bar"><i style={{ width: `${count / values[0].count * 100}%` }} /></div></div><b>{count}</b></div> : <Fragment key={key}><div className="programrow"><div><span>{programmeLabel(key)}</span><b>{count} <small>ผลงาน</small></b></div><div className="bar"><i style={{ width: `${count / values[0].count * 100}%`, background: COLORS[i % COLORS.length] }} /></div></div></Fragment>);
 }

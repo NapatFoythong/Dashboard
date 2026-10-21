@@ -5,6 +5,8 @@ import Filters from "./filters";
 import { RankedBars, TrendChart, TypeChart } from "./charts";
 import PublicationTable from "./publication-table";
 import SidebarNav from "./sidebar-nav";
+import FacultyDirectory from "./faculty-directory";
+import portraits from "@/data/staff-portraits.json";
 import { countWorks, DEFAULT_FILTERS, exportCsv, filterRecords, Filters as FilterValues, groupedCounts, GroupMode, prepareRecords, ResearchData, searchWorks, unique } from "@/lib/analytics";
 
 export default function Dashboard({ data }: { data: ResearchData }) {
@@ -47,6 +49,7 @@ export default function Dashboard({ data }: { data: ResearchData }) {
       <div className="lower"><section className="card" id="faculty"><div className="cardhead"><div><h2>อาจารย์ที่มีผลงานสูงสุด</h2><p>จำนวนผลงานของแต่ละคนในช่วงที่เลือก</p></div><span className="tag">TOP 8</span></div><RankedBars values={groupedCounts(raw, "name", filters.count).slice(0, 8)} faculty /></section>
         <section className="card"><div className="cardhead"><div><h2>ผลงานตามหลักสูตร</h2><p>ผลงานหนึ่งชิ้นอาจเกี่ยวข้องกับหลายหลักสูตร</p></div></div><RankedBars values={groupedCounts(raw, "programme", filters.count)} /></section></div>
       <PublicationTable works={visible} query={query} onSearch={setQuery} sort={sort} onSort={() => setSort(value => -value)} />
+      <FacultyDirectory data={data} portraits={portraits} />
       <section className="source" id="sources"><b>เกี่ยวกับข้อมูลและวิธีนับ</b><p>ข้อมูลต้นฉบับ {records.length} รายการ · อาจารย์ในไฟล์หลักสูตร {data.staff.length} คน · ชื่อในไฟล์ผลงานที่ยังจับคู่หลักสูตรไม่ได้ {unmatched.length} ชื่อ: {unmatched.join(", ")} โดยคงชื่อเดิมไว้และไม่จับคู่ชื่อที่ไม่ครบโดยอัตโนมัติ</p><p>แหล่งข้อมูล: Publications CV-10-2025.csv และ รายละเอียดอาจารย์แต่ละหลักสูตร.xlsx · ปีที่แสดงเป็น พ.ศ. (ค.ศ.) · DE แสดงเป็น DE / AISE ตามหมายเหตุในไฟล์หลักสูตร</p><p>ผลงานไม่ซ้ำใช้ข้อความรายละเอียดที่ปรับช่องว่างและตัวพิมพ์ให้ตรงกัน จึงอาจยังมีผลงานเดียวกันที่เขียนต่างรูปแบบ การนับแยกหลักสูตรให้เครดิตทุกหลักสูตรของผู้เขียน และไม่ควรนำผลรวมหลักสูตรมารวมซ้ำ ข้อมูลปี 2025 เป็นข้อมูลตามไฟล์เดือนตุลาคม ไม่ใช่ทั้งปี</p></section>
       <footer>CoC Research <span>Academic publications dashboard</span></footer>
     </main>

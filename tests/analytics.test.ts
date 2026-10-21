@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { countWorks, DEFAULT_FILTERS, exportCsv, filterRecords, groupedCounts, prepareRecords, searchWorks } from "../lib/analytics.ts";
 import type { ResearchData } from "../lib/analytics.ts";
+import { facultyNames, facultyRecords, facultySlug } from "../lib/faculty.ts";
 
 const data: ResearchData = JSON.parse(readFileSync(new URL("../data/research.json", import.meta.url), "utf8").replace(/^\uFEFF/, ""));
 const records = prepareRecords(data);
@@ -63,5 +64,43 @@ test("SSR and client ordering does not depend on localeCompare", () => {
     assert.deepEqual(searchWorks(fixture, "", -1).map(row => row.id), [1, 2]);
   } finally {
     String.prototype.localeCompare = original;
+  }
+});
+
+test("faculty pages preserve every CSV row under its exact author name", () => {
+  const names = facultyNames(data);
+  assert.equal(names.length, 45);
+  assert.equal(new Set(names.map(facultySlug)).size, names.length);
+  const allIds: number[] = [];
+  for (const name of names) {
+    const rows = facultyRecords(data, name);
+    const source = data.publications.filter(row => row.name === name);
+    assert.equal(rows.length, source.length, name);
+    for (const row of rows) {
+      const original = data.publications[row.id];
+      assert.equal(row.name, name);
+      assert.equal(row.detail, original.detail);
+      assert.equal(row.type, original.type);
+      assert.equal(row.month, original.month);
+      assert.equal(row.year, Number(original.year));
+      assert.equal(row.index, original.index.trim());
+      assert.equal(row.psu, original.psu);
+      allIds.push(row.id);
+    }
+  }
+  assert.equal(allIds.length, 717);
+  assert.equal(new Set(allIds).size, 717);
+  assert.equal(facultyRecords(data, "MONCHANOK").length, 0);
+  assert.equal(facultyRecords(data, "MONCHANOK THONGTHEP").length, 1);
+});
+
+test("portrait mapping uses verified full names and existing local files", () => {
+  const portraits = JSON.parse(readFileSync(new URL("../data/staff-portraits.json", import.meta.url), "utf8"));
+  assert.equal(Object.keys(portraits).length, 34);
+  for (const [name, portrait] of Object.entries(portraits) as [string, { verifiedName: string; image: string; cv: string }][]) {
+    assert.equal(portrait.verifiedName, name);
+    assert(facultyNames(data).includes(name));
+    assert(portrait.cv.startsWith("https://computing.psu.ac.th/cv/index?encode_id="));
+    assert(readFileSync(new URL(`../public${portrait.image}`, import.meta.url)).length > 1000);
   }
 });
