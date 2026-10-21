@@ -96,7 +96,7 @@ export function groupedCounts(records: Publication[], group: "name" | "programme
 }
 
 export function exportCsv(works: Work[]): string {
-  const rows = [["ปี ค.ศ.", "ปี พ.ศ.", "อาจารย์", "หลักสูตร", "ประเภท", "รายละเอียด", "ฐานดัชนี"],
+  const rows = [["ปี ค.ศ.", "ปี พ.ศ.", "อาจารย์", "หลักสูตร", "ประเภท", "รายละเอียด", "ฐานข้อมูลวิชาการ"],
     ...works.map(row => [row.year, row.year + 543, row.authors.join("; "), row.programmes.join("; "), row.type, row.detail, row.index])];
   return "\uFEFF" + rows.map(row => row.map(value => {
     const safe = String(value).replace(/^[\s]*[=+@-]/, "'$&");

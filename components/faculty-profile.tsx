@@ -21,6 +21,6 @@ export default function FacultyProfile({ name, records, portrait, staff }: {
       {portrait && <a className="profile-source" href={portrait.cv} target="_blank" rel="noreferrer">{t("ดู CV และแหล่งที่มาของรูปจากวิทยาลัยฯ ↗")}</a>}
     </div></section>
     <FacultyPublications records={records} name={name}/>
-    <section className="source"><b>{t("แหล่งข้อมูล")}</b><p>{t("ชื่อและรายการผลงานจาก Publications CV-10-2025.csv คงข้อความรายละเอียด ประเภท เดือน ปี ฐานดัชนี และสถานะสังกัด PSU ตามไฟล์ ไม่เพิ่มผลงานจาก CV ออนไลน์ ข้อมูลเป็น snapshot เดือนตุลาคม 2025")}</p><p>{t("มีการปรับช่องว่างและตัวพิมพ์ชื่อระหว่างนำเข้า แต่ไม่จับคู่หรือรวมผู้เขียนที่ชื่อไม่ตรงกันโดยอัตโนมัติ ")}{portrait && <a href={portrait.source} target="_blank" rel="noreferrer">{t("รูปจากหน้าบุคลากรสายวิชาการของวิทยาลัยการคอมพิวเตอร์")}</a>}</p></section>
+    <section className="source"><b>{t("แหล่งข้อมูล")}</b><p>{t("ชื่อและรายการผลงานจาก Publications CV-10-2025.csv คงข้อความรายละเอียด ประเภท เดือน ปี ฐานข้อมูลวิชาการ และสถานะสังกัด PSU ตามไฟล์ ไม่เพิ่มผลงานจาก CV ออนไลน์ ข้อมูลเป็น snapshot เดือนตุลาคม 2025")}</p><p>{t("มีการปรับช่องว่างและตัวพิมพ์ชื่อระหว่างนำเข้า แต่ไม่จับคู่หรือรวมผู้เขียนที่ชื่อไม่ตรงกันโดยอัตโนมัติ ")}{portrait && <a href={portrait.source} target="_blank" rel="noreferrer">{t("รูปจากหน้าบุคลากรสายวิชาการของวิทยาลัยการคอมพิวเตอร์")}</a>}</p></section>
   </main>;
 }

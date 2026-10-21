@@ -28,7 +28,7 @@ export default function Filters({ filters, years, programmes, indexes, staff, se
       <label>{t("ปีสิ้นสุด")}<select value={filters.end} onChange={e => update("end", Number(e.target.value))}>{years.map(y => <option key={y} value={y}>{formatYear(y)}</option>)}</select></label>
       <label>{t("หลักสูตร")}<select value={filters.programme} onChange={e => update("programme", e.target.value)}><option value="">{t("ทุกหลักสูตร")}</option>{programmes.map(p => <option key={p} value={p}>{displayProgramme(p)}</option>)}</select></label>
       <label>{t("ประเภทผลงาน")}<select value={filters.type} onChange={e => update("type", e.target.value)}><option value="">{t("ทุกประเภท")}</option>{Object.entries(TYPE_LABELS).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}</select></label>
-      <label>{t("ฐานดัชนี")}<select value={filters.index} onChange={e => update("index", e.target.value)}><option value="">{t("ทุกฐานดัชนี")}</option>{indexes.map(index => <option key={index} value={index || "__empty__"}>{index || t("ไม่ระบุ")}</option>)}</select></label>
+      <label>{t("ฐานข้อมูลวิชาการ")}<select value={filters.index} onChange={e => update("index", e.target.value)}><option value="">{t("ทุกฐานข้อมูลวิชาการ")}</option>{indexes.map(index => <option key={index} value={index || "__empty__"}>{index || t("ไม่ระบุ")}</option>)}</select></label>
       <label>{t("วิธีนับ")}<select value={filters.count} onChange={e => update("count", e.target.value as CountMode)}><option value="unique">{t("ผลงานไม่ซ้ำ")}</option><option value="records">{t("รายการตามอาจารย์")}</option></select></label>
     </div>
     <div className="filterbottom">
