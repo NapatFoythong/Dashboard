@@ -85,6 +85,17 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     assert.equal(container.querySelector('#faculty-directory h2')!.textContent, "Faculty directory");
     assert.equal(container.querySelector('button[aria-label="English"]')!.getAttribute("aria-pressed"), "true");
     const table = container.querySelector("#publications")!;
+    const typeFilter = table.querySelector('.type-control select') as HTMLSelectElement;
+    assert.equal(typeFilter.options.length, 5);
+    for (const option of [...typeFilter.options].slice(1)) {
+      await act(async () => { typeFilter.value = option.value; typeFilter.dispatchEvent(new dom.window.Event("change", { bubbles: true })); });
+      const rows = [...table.querySelectorAll('tbody tr td:last-child')];
+      assert(rows.length > 0);
+      assert(rows.every(element => element.textContent!.startsWith(option.text)));
+      assert.equal((container.querySelector('.filtergrid label:nth-child(4) select') as HTMLSelectElement).value, option.value);
+    }
+    await act(async () => { typeFilter.value = ""; typeFilter.dispatchEvent(new dom.window.Event("change", { bubbles: true })); });
+    assert.equal(container.querySelector('.stats strong')!.textContent, "234");
     const picker = table.querySelector(".table-faculty-picker")!;
     assert(picker.querySelector('.table-picker-list')!.textContent!.includes("NOPPON LERTCHUWONGSA"), "Additional CSV faculty must remain available for filtering");
     await click(picker.querySelectorAll(".staffactions button")[1]);
