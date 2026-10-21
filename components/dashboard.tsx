@@ -5,6 +5,7 @@ import Filters from "./filters";
 import { RankedBars, TrendChart, TypeChart } from "./charts";
 import PublicationTable from "./publication-table";
 import SidebarNav from "./sidebar-nav";
+import CocBrand from "./coc-brand";
 import FacultyDirectory from "./faculty-directory";
 import portraits from "@/data/staff-portraits.json";
 import { canonicalFacultyName } from "@/lib/faculty-identity";
@@ -40,8 +41,8 @@ export default function Dashboard({ data }: { data: ResearchData }) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   return <>
-    <aside><div className="brand"><b className="logo">C<span>o</span>C</b><div>COLLEGE OF COMPUTING<small>Research intelligence</small></div></div><div className="navlabel">WORKSPACE</div><SidebarNav /><div className="asidefoot"><span className="dot" />ข้อมูลจากไฟล์ที่นำเข้า<small>Publications CV · ตุลาคม 2025</small></div></aside>
-    <main id="overview"><header><div>วิทยาลัยการคอมพิวเตอร์ <span>/</span> ภาพรวมผลงานวิจัย</div><span className="tag">RESEARCH ANALYTICS</span></header>
+    <aside><CocBrand /><div className="navlabel">RESEARCH WORKSPACE</div><SidebarNav /><div className="asidefoot"><span className="dot" />ข้อมูลจากไฟล์ที่นำเข้า<small>Publications CV · ตุลาคม 2025</small></div></aside>
+    <main id="overview"><header><div className="desktop-breadcrumb">วิทยาลัยการคอมพิวเตอร์ <span>/</span> ภาพรวมผลงานวิจัย</div><CocBrand className="mobile-brand" /><span className="tag">RESEARCH ANALYTICS</span></header>
       <section className="heading"><div><p className="eyebrow">ACADEMIC PERFORMANCE</p><h1>ผลงานทางวิชาการของอาจารย์</h1><p>สำรวจผลงานวิจัย เชื่อมโยงข้อมูล และติดตามแนวโน้มของวิทยาลัยการคอมพิวเตอร์</p></div><button id="export" onClick={download}>↓ ส่งออก CSV</button></section>
       <Filters filters={filters} years={years} programmes={programmes} indexes={indexes} staff={staff} selected={selected} onChange={setFilters} onSelect={setSelected} onReset={reset} />
       <div className="stats" aria-live="polite">{statistics.map(stat => <div className="stat" key={stat.title}><label>{stat.title}</label><strong>{stat.value.toLocaleString("en-US")}</strong><small>{stat.note}</small></div>)}</div>

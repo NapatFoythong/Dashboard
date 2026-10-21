@@ -33,7 +33,7 @@ export interface Filters {
 export const DEFAULT_FILTERS: Filters = {
   start: 2020, end: 2024, programme: "", type: "", index: "", psu: false, count: "unique",
 };
-export const COLORS = ["#238367", "#92bda1", "#b2c77c", "#dfb770", "#88a9bc", "#b79dc4"];
+export const COLORS = ["#33c0ca", "#003c71", "#b52324", "#729bc0", "#a782b1", "#d5aa56"];
 export const TYPE_LABELS: Record<string, string> = {
   "International Journal Articles": "วารสารนานาชาติ",
   "International Proceedings": "ประชุมวิชาการนานาชาติ",
