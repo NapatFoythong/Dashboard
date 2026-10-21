@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Filters from "./filters";
 import { RankedBars, TrendChart, TypeChart } from "./charts";
 import PublicationTable from "./publication-table";
+import SidebarNav from "./sidebar-nav";
 import { countWorks, DEFAULT_FILTERS, exportCsv, filterRecords, Filters as FilterValues, groupedCounts, GroupMode, prepareRecords, ResearchData, searchWorks, unique } from "@/lib/analytics";
 
 export default function Dashboard({ data }: { data: ResearchData }) {
@@ -36,7 +37,7 @@ export default function Dashboard({ data }: { data: ResearchData }) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   return <>
-    <aside><div className="brand"><b className="logo">C<span>o</span>C</b><div>COLLEGE OF COMPUTING<small>Research intelligence</small></div></div><div className="navlabel">WORKSPACE</div><nav aria-label="เมนูหลัก"><a href="#overview" className="active">▦ &nbsp; ภาพรวมผลงาน</a><a href="#publications">▤ &nbsp; รายการผลงาน</a><a href="#faculty">♙ &nbsp; ผลงานรายอาจารย์</a><a href="#sources">ⓘ &nbsp; เกี่ยวกับข้อมูล</a></nav><div className="asidefoot"><span className="dot" />ข้อมูลจากไฟล์ที่นำเข้า<small>Publications CV · ตุลาคม 2025</small></div></aside>
+    <aside><div className="brand"><b className="logo">C<span>o</span>C</b><div>COLLEGE OF COMPUTING<small>Research intelligence</small></div></div><div className="navlabel">WORKSPACE</div><SidebarNav /><div className="asidefoot"><span className="dot" />ข้อมูลจากไฟล์ที่นำเข้า<small>Publications CV · ตุลาคม 2025</small></div></aside>
     <main id="overview"><header><div>วิทยาลัยการคอมพิวเตอร์ <span>/</span> ภาพรวมผลงานวิจัย</div><span className="tag">RESEARCH ANALYTICS</span></header>
       <section className="heading"><div><p className="eyebrow">ACADEMIC PERFORMANCE</p><h1>ผลงานทางวิชาการของอาจารย์</h1><p>สำรวจผลงานวิจัย เชื่อมโยงข้อมูล และติดตามแนวโน้มของวิทยาลัยการคอมพิวเตอร์</p></div><button id="export" onClick={download}>↓ ส่งออก CSV</button></section>
       <Filters filters={filters} years={years} programmes={programmes} indexes={indexes} staff={staff} selected={selected} onChange={setFilters} onSelect={setSelected} onReset={reset} />
