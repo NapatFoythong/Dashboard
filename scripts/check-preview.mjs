@@ -5,7 +5,7 @@ const response = await fetch(origin);
 assert.equal(response.status, 200);
 const html = await response.text();
 assert(html.includes("ผลงานทางวิชาการของอาจารย์"));
-assert(html.includes("252"));
+assert(html.includes("234"));
 const assets = [...new Set([...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css)(?:\?[^"]*)?)"/g)].map(match => match[1]))];
 assert(assets.length > 0);
 await Promise.all(assets.map(async path => {

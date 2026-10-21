@@ -73,6 +73,9 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
   try {
     await act(async () => { root.render(app); });
     assert(container.querySelector("h1")!.textContent!.includes("ผลงานทางวิชาการ"));
+    assert.equal(container.querySelectorAll('#stafflist input:checked').length, 34);
+    assert.deepEqual([...container.querySelectorAll('.stats strong')].map(element => element.textContent), ["234", "27", "173", "4"]);
+    assert(container.querySelectorAll('.stats small')[1].textContent!.includes("34"));
     await click(container.querySelector('button[aria-label="English"]'));
     assert.equal(document.documentElement.lang, "en");
     assert.equal(localStorage.getItem("coc-language"), "en");
@@ -81,6 +84,7 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     assert.equal(container.querySelector('button[aria-label="English"]')!.getAttribute("aria-pressed"), "true");
     const table = container.querySelector("#publications")!;
     const picker = table.querySelector(".table-faculty-picker")!;
+    assert(picker.querySelector('.table-picker-list')!.textContent!.includes("NOPPON LERTCHUWONGSA"), "Additional CSV faculty must remain available for filtering");
     await click(picker.querySelectorAll(".staffactions button")[1]);
     assert(table.querySelector(".empty")!.textContent!.includes("No records"));
     const label = [...picker.querySelectorAll(".table-picker-list label")].find(element => element.textContent === "ADISAK INTANA")!;
@@ -91,6 +95,17 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     await act(async () => { sorter.value = "oldest"; sorter.dispatchEvent(new dom.window.Event("change", { bubbles: true })); });
     const years = [...table.querySelectorAll("tbody tr td:first-child b")].map(element => Number(element.textContent));
     assert(years.every((year, i) => !i || years[i - 1] <= year));
+    await click(picker.querySelectorAll(".staffactions button")[1]);
+    const extra = [...picker.querySelectorAll(".table-picker-list label")].find(element => element.textContent === "NOPPON LERTCHUWONGSA")!;
+    await click(extra.querySelector("input"));
+    assert(table.querySelectorAll("tbody .faculty-link").length > 0);
+    assert([...table.querySelectorAll("tbody .faculty-link")].every(element => element.textContent === "NOPPON LERTCHUWONGSA"));
+    await click(container.querySelector('.filtertitle button'));
+    assert.equal(container.querySelectorAll('#stafflist input:checked').length, 34, "Reset must restore the Excel roster, not all 44 names");
+    assert.equal(container.querySelector('.stats strong')!.textContent, "234");
+    await click(picker.querySelectorAll(".staffactions button")[1]);
+    await click(label.querySelector("input"));
+    await act(async () => { sorter.value = "oldest"; sorter.dispatchEvent(new dom.window.Event("change", { bubbles: true })); });
     await click(container.querySelector('button[aria-label="ภาษาไทย"]'));
     assert.equal(document.documentElement.lang, "th");
     assert.equal(sorter.value, "oldest", "Switching language must retain sort and faculty selection");

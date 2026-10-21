@@ -18,12 +18,13 @@ export default function Dashboard({ data }: {
     const { t, language } = useLanguage();
     const records = useMemo(() => prepareRecords(data), [data]);
     const staff = useMemo(() => unique([...data.staff.map(person => canonicalFacultyName(person.name)), ...records.map(row => row.name)]).sort(), [data, records]);
+    const roster = useMemo(() => data.staff.map(person => canonicalFacultyName(person.name)), [data]);
     const programmes = useMemo(() => unique(records.flatMap(row => row.programmes)).sort(), [records]);
     const indexes = useMemo(() => unique(records.map(row => row.index)).sort(), [records]);
     const years = useMemo(() => { const values = records.map(row => row.year); const first = Math.min(...values); return Array.from({ length: Math.max(...values) - first + 1 }, (_, i) => first + i); }, [records]);
     const unmatched = useMemo(() => { const names = new Set(data.staff.map(person => canonicalFacultyName(person.name))); return unique(records.filter(row => !names.has(canonicalFacultyName(row.name))).map(row => row.name)); }, [data, records]);
     const [filters, setFilters] = useState<FilterValues>({ ...DEFAULT_FILTERS });
-    const [selected, setSelected] = useState(() => new Set(staff));
+    const [selected, setSelected] = useState(() => new Set(roster));
     const [group, setGroup] = useState<GroupMode>("total");
     const [query, setQuery] = useState("");
     const [sort, setSort] = useState<PublicationSort>("newest");
@@ -37,7 +38,7 @@ export default function Dashboard({ data }: {
         { title: t("ผลงานในฐาน Scopus"), value: scopus, note: t("{0}% ของผลงานที่แสดง", works.length ? Math.round(scopus / works.length * 100) : 0) },
         { title: t("ประเภทผลงาน"), value: unique(raw.map(row => row.type)).length, note: t("วารสารและการประชุมวิชาการ") },
     ];
-    function reset() { setFilters({ ...DEFAULT_FILTERS }); setSelected(new Set(staff)); setGroup("total"); setQuery(""); setSort("newest"); }
+    function reset() { setFilters({ ...DEFAULT_FILTERS }); setSelected(new Set(roster)); setGroup("total"); setQuery(""); setSort("newest"); }
     function download() {
         const url = URL.createObjectURL(new Blob([exportCsv(visible)], { type: "text/csv;charset=utf-8" }));
         const anchor = document.createElement("a");

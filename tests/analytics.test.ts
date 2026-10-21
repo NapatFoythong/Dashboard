@@ -11,7 +11,7 @@ const records = prepareRecords(data);
 const selected = new Set([...data.staff.map(row => row.name), ...records.map(row => row.name)]);
 const filtered = filterRecords(records, DEFAULT_FILTERS, selected);
 
-test("migration preserves source totals and default 2020–2024 counts", () => {
+test("source totals and all-author 2020–2024 counts remain unchanged", () => {
   assert.equal(records.length, 717);
   assert.equal(data.staff.length, 34);
   assert.equal(filtered.length, 258);
