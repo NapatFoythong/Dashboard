@@ -1,6 +1,18 @@
 export type Language = "th" | "en";
 
 export const EN_MESSAGES: Record<string, string> = {
+  "อ่านบทความต้นฉบับ": "Read original article",
+  "ไม่มี DOI หรือลิงก์บทความในข้อมูลต้นฉบับ": "No DOI or article link is provided in the source data.",
+  "ⓘ วิธีนับและขอบเขตข้อมูล": "ⓘ How counts work and what the data covers",
+  "อ้างอิงไฟล์ Publications CV-10-2025.csv ณ เดือนตุลาคม 2025 ไม่ใช่ข้อมูลปัจจุบันหรือผลงานทั้งหมดตลอดอาชีพ ปี 2025 อาจยังไม่ครบปี": "Based on Publications CV-10-2025.csv as of October 2025. This is not live data or a complete career record. The year 2025 may be incomplete.",
+  "จำนวนบนการ์ดอาจารย์และหน้าอาจารย์นับทุกแถวของชื่อนั้นจาก CSV ทุกปี รวมแถวซ้ำตามต้นฉบับ ไม่ขึ้นกับตัวกรองภาพรวม จำนวน 0 หมายถึงไม่พบข้อมูลในไฟล์นี้": "Faculty cards and profiles count all CSV rows for that person across all years, including duplicate rows. Dashboard filters do not affect these counts. Zero means no records were found in this file.",
+  "ตัวเลขภาพรวมและกราฟใช้ช่วงปี อาจารย์ และตัวกรองด้านบน ส่วนจำนวนในตารางใช้คำค้นและตัวกรองจากกราฟเพิ่มเติม": "Summary figures and charts use the years, faculty and filters above. Table counts also apply the search query and selections made on the charts.",
+  "ผลงานไม่ซ้ำ: รวมรายการที่รายละเอียดตรงกันหลังปรับช่องว่างและตัวพิมพ์ จึงอาจยังมีงานเดียวกันที่เขียนต่างรูปแบบ รายการตามอาจารย์: นับทุกแถวตาม CSV งานที่มีผู้เขียนร่วมอาจนับหลายครั้ง": "Unique publications merge matching descriptions after normalising spaces and letter case; differently written citations may remain separate. Records by faculty count every CSV row, so coauthored work may be counted more than once.",
+  "ผลงานตามหลักสูตรให้เครดิตทุกหลักสูตรของผู้เขียน ผลรวมอาจมากกว่าผลงานไม่ซ้ำ สถานะ Scopus อ้างอิงค่าที่บันทึกในไฟล์ ไม่ได้ตรวจสถานะปัจจุบัน": "Programme counts credit every programme associated with the authors, so totals can exceed unique publications. Scopus status comes from the file and has not been checked against current listings.",
+  "ปุ่มอ่านบทความใช้ DOI หรือ URL ที่พบในรายละเอียดต้นฉบับ ไม่ยืนยันว่าปลายทางยังเปิดได้หรืออ่านฉบับเต็มได้ฟรี": "Article buttons use DOI identifiers or URLs in the original descriptions. Links may no longer work, and full text may require access.",
+  "กดแท่งกราฟหรือส่วนของกราฟวงกลมเพื่อกรองรายการผลงานด้านล่าง": "Select a bar or a donut segment to filter the publication table below.",
+  "ตารางกรองจากกราฟ:": "Table filtered by chart:",
+  "ล้างตัวกรองจากกราฟ": "Clear chart selection",
   "ใช้รายชื่อเดียวกับตัวกรองด้านบน": "Shares the faculty selection with the filters above.",
   "ประเภทผลงาน A–Z": "Publication type A–Z",
   "ประเภทผลงาน Z–A": "Publication type Z–A",

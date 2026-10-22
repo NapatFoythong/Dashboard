@@ -60,3 +60,8 @@ Next.js ตั้งค่า `output: "export"` เพื่อเผยแพ�
 ค่าเริ่มต้นเลือกเฉพาะอาจารย์ 34 คนตาม Excel ในปี 2020–2024: 238 รายการ หรือ 234 ผลงานไม่ซ้ำ มีอาจารย์ที่มีผลงาน 27 คน และผลงาน Scopus 173 ผลงาน ปุ่มล้างตัวกรองกลับมาที่รายชื่อ 34 คนนี้ อีก 10 ชื่อยังค้นหาและเลือกเพิ่มในตัวกรองได้ หากเลือกครบ 44 คน ช่วงปีเดียวกันจะเป็น 258 รายการ หรือ 252 ผลงานไม่ซ้ำ ข้อมูลต้นฉบับ 717 แถวยังอยู่ครบ การนับผลงานไม่ซ้ำใช้รายละเอียดที่ตรงกันหลังปรับช่องว่างและตัวพิมพ์ ไม่ใช่การยืนยันด้วย DOI ผลรวมรายหลักสูตรอาจซ้ำ เพราะให้เครดิตทุกหลักสูตรของผู้เขียน
 
 เอกสารอ้างอิง: https://nextjs.org/docs/app/guides/static-exports
+
+## Article links and chart selections
+
+Article buttons use explicit HTTP(S) URLs or DOI identifiers from the original CSV descriptions. Missing links are stated in publication details. Chart selections filter the table only; the banner can clear that selection. Summary figures retain the global filters. The expandable data guide explains deduplication, faculty row counts, programme credits, and the October 2025 snapshot.
+

@@ -1,4 +1,5 @@
 "use client";
+import DataGuide from "./data-guide";
 import { useLanguage } from "./language-provider";
 import Link from "next/link";
 import type { Publication, ResearchData } from "@/lib/analytics";
@@ -20,7 +21,7 @@ export default function FacultyProfile({ name, records, portrait, staff }: {
       <div className="faculty-summary"><div><strong>{records.length}</strong><span>{t("รายการผลงานตาม CSV")}</span></div><div><strong>{new Set(records.map(row => row.type)).size}</strong><span>{t("ประเภทผลงาน")}</span></div><div><strong>{records.length ? `${Math.min(...records.map(row => row.year)) + 543}–${Math.max(...records.map(row => row.year)) + 543}` : "—"}</strong><span>{t("ช่วงปี พ.ศ. ที่มีข้อมูล")}</span></div></div>
       {portrait && <a className="profile-source" href={portrait.cv} target="_blank" rel="noreferrer">{t("ดู CV และแหล่งที่มาของรูปจากวิทยาลัยฯ ↗")}</a>}
     </div></section>
-    <FacultyPublications records={records} name={name}/>
+    <DataGuide faculty /><FacultyPublications records={records} name={name}/>
     <section className="source"><b>{t("แหล่งข้อมูล")}</b><p>{t("ชื่อและรายการผลงานจาก Publications CV-10-2025.csv คงข้อความรายละเอียด ประเภท เดือน ปี ฐานข้อมูลวิชาการ และสถานะสังกัด PSU ตามไฟล์ ไม่เพิ่มผลงานจาก CV ออนไลน์ ข้อมูลเป็น snapshot เดือนตุลาคม 2025")}</p><p>{t("มีการปรับช่องว่างและตัวพิมพ์ชื่อระหว่างนำเข้า แต่ไม่จับคู่หรือรวมผู้เขียนที่ชื่อไม่ตรงกันโดยอัตโนมัติ ")}{portrait && <a href={portrait.source} target="_blank" rel="noreferrer">{t("รูปจากหน้าบุคลากรสายวิชาการของวิทยาลัยการคอมพิวเตอร์")}</a>}</p></section>
   </main>;
 }

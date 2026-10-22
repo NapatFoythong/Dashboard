@@ -68,6 +68,8 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
   }
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
   Object.defineProperty(globalThis, "self", { configurable: true, value: dom.window });
+  Object.defineProperty(dom.window.HTMLDialogElement.prototype, "showModal", { configurable: true, value: function () { this.open = true; } });
+  Object.defineProperty(dom.window.HTMLDialogElement.prototype, "close", { configurable: true, value: function () { this.open = false; this.dispatchEvent(new dom.window.Event("close")); } });
   const container = document.getElementById("root")!;
   const app = <LanguageProvider><Dashboard data={data} /></LanguageProvider>;
   let root = createRoot(container);
@@ -85,6 +87,37 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     assert.equal(container.querySelector('#faculty-directory h2')!.textContent, "Faculty directory");
     assert.equal(container.querySelector('button[aria-label="English"]')!.getAttribute("aria-pressed"), "true");
     const table = container.querySelector("#publications")!;
+    assert(container.querySelector('.data-guide')!.textContent!.includes('October 2025'));
+    const bar = container.querySelector('#chart rect[tabindex="0"]')!;
+    await act(async () => { bar.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })); });
+    const chartYear = Number(bar.getAttribute('aria-label')!.match(/\d{4}/)![0]);
+    assert([...table.querySelectorAll('tbody tr td:first-child b')].every(element => Number(element.textContent) === chartYear));
+    await click(container.querySelector('.chart-filter button'));
+    const segment = container.querySelector('#donut circle[role="button"]')!;
+    await act(async () => { segment.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true })); });
+    const chartType = segment.getAttribute('aria-label')!.split(':')[0];
+    assert([...table.querySelectorAll('tbody tr td:last-child')].every(element => element.textContent!.startsWith(chartType)));
+    await click(container.querySelector('.chart-filter button'));
+    assert.equal(container.querySelector('.stats strong')!.textContent, "234");
+    const authorBar = container.querySelector('.rank-filter')!;
+    await click(authorBar);
+    const chartAuthor = authorBar.getAttribute('aria-label')!.split(':')[0];
+    assert([...table.querySelectorAll('tbody tr')].every(row => [...row.querySelectorAll('.faculty-link')].some(link => link.textContent === chartAuthor)));
+    await click(container.querySelector('.chart-filter button'));
+    const programmeBar = container.querySelector('.programme-filter')!;
+    const chartProgramme = programmeBar.querySelector('.programme-label > span')!.textContent!;
+    await click(programmeBar);
+    assert([...table.querySelectorAll('tbody tr td:nth-child(3) small')].every(element => element.textContent!.includes(chartProgramme)));
+    await click(container.querySelector('.chart-filter button'));
+    const article = table.querySelector('.article-links a')!;
+    assert(article.getAttribute('href')!.startsWith('http'));
+    assert.equal(article.getAttribute('target'), '_blank');
+    const sourceText = table.querySelector('.pubtitle')!.textContent;
+    await click(table.querySelector('.pubtitle'));
+    assert(container.querySelector('dialog')!.open);
+    assert.equal(container.querySelector('dialog p')!.textContent, sourceText);
+    assert(container.querySelector('dialog .article-links a'));
+    await click(container.querySelector('.close-detail'));
     const typeFilter = table.querySelector('.type-control select') as HTMLSelectElement;
     assert.equal(typeFilter.options.length, 5);
     for (const option of [...typeFilter.options].slice(1)) {
