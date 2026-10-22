@@ -1,5 +1,6 @@
 "use client";
 import ArticleLinks from "./article-links";
+import ReferenceText from "./reference-text";
 import { useLanguage } from "./language-provider";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -38,6 +39,6 @@ export default function PublicationTable({ works, query, onSearch, sort, onSort,
         {!works.length && <tr><td colSpan={4} className="empty">{t("ไม่พบรายการที่ตรงกับตัวกรอง")}</td></tr>}
       </tbody></table></div><div className="pagination"><span aria-live="polite">{t("หน้า ")}{currentPage} / {pages} · {works.length}{t(" รายการ")}</span><div><button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>{t("← ก่อนหน้า")}</button><button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)}>{t("ถัดไป →")}</button></div></div>
     </section>
-    <dialog ref={dialog} aria-labelledby="detail-title" onCancel={() => setDetail(null)} onClose={() => setDetail(null)}><button className="textbtn close-detail" onClick={close}>{t("ปิด ✕")}</button>{detail && <><h2 id="detail-title">{t(TYPE_LABELS[detail.type]) || detail.type} · {formatYear(detail.year)}</h2><p>{detail.detail}</p><ArticleLinks detail={detail.detail} showMissing /><p><b>{t("อาจารย์:")}</b> {detail.authors.map((author, i) => <span key={author}>{i > 0 && ", "}<Link className="faculty-link" href={facultyHref(author)}>{author}</Link></span>)}<br /><b>{t("หลักสูตร:")}</b> {detail.programmes.map(displayProgramme).join(", ")}<br /><b>{t("ฐานข้อมูลวิชาการ:")}</b> {detail.index || t("ไม่ระบุ")}<br /><b>{t("สังกัด PSU ตามรายการต้นฉบับ:")}</b> {detail.psu || t("ไม่ระบุ")}</p></>}</dialog>
+    <dialog ref={dialog} aria-labelledby="detail-title" onCancel={() => setDetail(null)} onClose={() => setDetail(null)}><button className="textbtn close-detail" onClick={close}>{t("ปิด ✕")}</button>{detail && <><h2 id="detail-title">{t(TYPE_LABELS[detail.type]) || detail.type} · {formatYear(detail.year)}</h2><p><ReferenceText text={detail.detail} /></p><ArticleLinks detail={detail.detail} showMissing /><p><b>{t("อาจารย์:")}</b> {detail.authors.map((author, i) => <span key={author}>{i > 0 && ", "}<Link className="faculty-link" href={facultyHref(author)}>{author}</Link></span>)}<br /><b>{t("หลักสูตร:")}</b> {detail.programmes.map(displayProgramme).join(", ")}<br /><b>{t("ฐานข้อมูลวิชาการ:")}</b> {detail.index || t("ไม่ระบุ")}<br /><b>{t("สังกัด PSU ตามรายการต้นฉบับ:")}</b> {detail.psu || t("ไม่ระบุ")}</p></>}</dialog>
   </>;
 }

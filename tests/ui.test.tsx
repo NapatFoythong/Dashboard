@@ -9,12 +9,26 @@ import ts from "typescript";
 import Dashboard from "../components/dashboard";
 import LanguageProvider from "../components/language-provider";
 import FacultyProfile from "../components/faculty-profile";
+import ReferenceText from "../components/reference-text";
 import { facultyRecords } from "../lib/faculty.ts";
 import { EN_MESSAGES, translate } from "../lib/i18n.ts";
 import { orderWorks } from "../lib/publication-sort.ts";
 import { countWorks, prepareRecords, type ResearchData } from "../lib/analytics.ts";
 
 const data: ResearchData = JSON.parse(readFileSync("data/research.json", "utf8"));
+
+test("inline DOI and URL references remain unchanged and open safe external links", () => {
+  const text = 'doi: 10.31803/tg-20220126221837. Link: https://www.researchgate.net/publication/363881037_Computer_Game';
+  const dom = new JSDOM(renderToString(<ReferenceText text={text} />));
+  assert.equal(dom.window.document.body.textContent, text);
+  const links = dom.window.document.querySelectorAll('a');
+  assert.equal(links.length, 2);
+  assert.equal(links[0].href, 'https://doi.org/10.31803/tg-20220126221837');
+  assert.equal(links[1].href, 'https://www.researchgate.net/publication/363881037_Computer_Game');
+  assert([...links].every(link => link.target === '_blank' && link.rel.includes('noopener')));
+  assert.equal(renderToString(<ReferenceText text={'<script>bad</script> javascript:alert(1)'} />).includes('<script>'), false);
+  dom.window.close();
+});
 
 test("eight publication sort modes are deterministic and do not modify source records", () => {
   const works = countWorks(prepareRecords(data), "records");

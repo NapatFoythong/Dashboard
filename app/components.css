@@ -1,4 +1,6 @@
 /* React components retain the original dashboard design. */
+.reference-link { color: #007b90; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.reference-link:hover { color: var(--psu-navy); }
 .article-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
 .article-links a { display: inline-block; font-size: 12px; padding: 6px 10px; border-radius: 5px; border: 1px solid #b5dfe5; color: var(--psu-navy); background: #eefafb; text-decoration: none; }
 .data-guide { margin: 16px 0 24px; padding: 14px 18px; border: 1px solid var(--border); background: #f4f9fc; border-radius: 8px; }
