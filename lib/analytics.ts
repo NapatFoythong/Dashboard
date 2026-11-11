@@ -1,4 +1,5 @@
 import { canonicalFacultyName } from "./faculty-identity.ts";
+import { matchesResearchQuery } from "./research-topics.ts";
 
 export interface SourcePublication {
   name: string;
@@ -83,8 +84,7 @@ export function countWorks(rows: Publication[], mode: CountMode): Work[] {
 }
 
 export function searchWorks(works: Work[], query: string, sort: number): Work[] {
-  const q = normalize(query);
-  return works.filter(row => normalize(`${row.detail} ${row.authors.join(" ")}`).includes(q))
+  return works.filter(row => matchesResearchQuery(row.detail, query, row.authors.join(" ")))
     .sort((a, b) => sort * (a.year - b.year) || compareText(a.detail, b.detail) || a.id - b.id);
 }
 

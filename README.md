@@ -74,3 +74,8 @@ Production uses the Sites D1 binding DB and the schema migration in drizzle/. Lo
 
 The Worker embeds compressed Next.js output; scripts/build-worker.mjs enforces its module size budget. npm run build creates both the Next.js output and the Worker. The local npm run dev server and npm start both expose /api/visitors. Database migrations must be included when deploying to a different host.
 
+
+## Research topic discovery
+
+Research topics are keyword-based labels derived from original CSV citation descriptions, not authoritative classifications or faculty expertise. Works can have multiple topics or remain unclassified. Rules and search aliases are in lib/research-topics.ts; source records remain unchanged. Topic search is available in the publication table, faculty directory and faculty profiles. AI matches related methods such as machine learning and deep learning, not the substring in Thai. Combine a name and topic, e.g. ADISAK AI. Table topic selection does not change overview statistics. Directory searches carry into the profile through the q query parameter.
+

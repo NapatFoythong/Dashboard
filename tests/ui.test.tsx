@@ -134,6 +134,11 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     assert(container.querySelector('dialog .article-links a'));
     await click(container.querySelector('.close-detail'));
     const typeFilter = table.querySelector('.type-control select') as HTMLSelectElement;
+    const topicFilter = table.querySelector('.topic-control select') as HTMLSelectElement;
+    await act(async () => { topicFilter.value = 'ai'; topicFilter.dispatchEvent(new dom.window.Event('change', { bubbles: true })); });
+    assert(table.querySelectorAll('tbody .topic-tags').length > 0);
+    assert([...table.querySelectorAll('tbody .topic-tags')].every(element => element.textContent!.includes('Artificial intelligence')));
+    await act(async () => { topicFilter.value = ''; topicFilter.dispatchEvent(new dom.window.Event('change', { bubbles: true })); });
     assert.equal(typeFilter.options.length, 5);
     for (const option of [...typeFilter.options].slice(1)) {
       await act(async () => { typeFilter.value = option.value; typeFilter.dispatchEvent(new dom.window.Event("change", { bubbles: true })); });
@@ -188,6 +193,10 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     assert.equal(container.querySelector("h1")!.textContent, faculty);
     assert(container.querySelector(".faculty-works h2")!.textContent!.startsWith("Publications by"));
     assert.equal(container.querySelector(".work-detail")!.textContent, facultyRows[0].detail, "CSV publication text must remain unchanged in English");
+    const facultyTopic = container.querySelector('.faculty-controls .topic-control select') as HTMLSelectElement;
+    await act(async () => { facultyTopic.value = 'ai'; facultyTopic.dispatchEvent(new dom.window.Event('change', { bubbles: true })); });
+    assert(container.querySelectorAll('.faculty-publications li').length > 0);
+    assert([...container.querySelectorAll('.faculty-publications .topic-tags')].every(element => element.textContent!.includes('Artificial intelligence')));
     assert.equal(container.querySelector('button[aria-label="English"]')!.getAttribute("aria-pressed"), "true");
     const previousFetch = globalThis.fetch;
     const visitorIds: string[] = [];
