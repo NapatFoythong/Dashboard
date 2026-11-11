@@ -1,6 +1,10 @@
 export type Language = "th" | "en";
 
 export const EN_MESSAGES: Record<string, string> = {
+  "ปิดตัวอย่างอาจารย์": "Close faculty preview",
+  "สรุปจาก CSV ทุกปี ไม่ขึ้นกับตัวกรองภาพรวม": "Summary of all CSV years, independent of dashboard filters",
+  "ตัวอย่างผลงานล่าสุด": "Recent publication examples",
+  "ดูผลงานทั้งหมดของอาจารย์": "View all faculty publications",
   "ค้นหาได้ เช่น AI, ปัญญาประดิษฐ์ หรือ ADISAK AI": "Try searching AI, artificial intelligence, or ADISAK AI.",
   "หัวข้อวิจัย": "Research topic",
   "ทุกหัวข้อวิจัย": "All research topics",

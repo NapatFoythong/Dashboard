@@ -79,3 +79,8 @@ The Worker embeds compressed Next.js output; scripts/build-worker.mjs enforces i
 
 Research topics are keyword-based labels derived from original CSV citation descriptions, not authoritative classifications or faculty expertise. Works can have multiple topics or remain unclassified. Rules and search aliases are in lib/research-topics.ts; source records remain unchanged. Topic search is available in the publication table, faculty directory and faculty profiles. AI matches related methods such as machine learning and deep learning, not the substring in Thai. Combine a name and topic, e.g. ADISAK AI. Table topic selection does not change overview statistics. Directory searches carry into the profile through the q query parameter.
 
+
+## Faculty hover preview
+
+Hover or focus a faculty directory card to open a non-modal preview with the verified portrait, name, programmes, all-year CSV row count, publication type counts, and three recent records. The preview is portalled outside the scrolling grid and clamped to the viewport. Moving into it keeps it open; Escape, outside clicks, or scrolling the page dismiss it. Arrow Down from a focused card moves focus into the preview. Counts and recent examples use the same records as the faculty profile.
+

@@ -101,6 +101,33 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     assert.equal(container.querySelector("h1")!.textContent, "Faculty academic publications");
     assert.equal(container.querySelector('#faculty-directory h2')!.textContent, "Faculty directory");
     assert.equal(container.querySelector('button[aria-label="English"]')!.getAttribute("aria-pressed"), "true");
+    const firstFacultyCard = container.querySelector('#faculty-directory .faculty-person')!;
+    await act(async () => {
+      firstFacultyCard.dispatchEvent(new dom.window.MouseEvent('mouseover', { bubbles: true }));
+      await new Promise(resolve => setTimeout(resolve, 230));
+    });
+    const preview = document.querySelector('.faculty-preview-popup')!;
+    assert(preview, 'Hover should open a preview outside the scrolling grid');
+    assert.equal(preview.querySelector('h3')!.textContent, 'ADISAK INTANA');
+    assert.equal(preview.querySelectorAll('.preview-works li').length, 3);
+    assert.equal(preview.querySelector('.preview-works p')!.textContent, facultyRecords(data, 'ADISAK INTANA')[0].detail);
+    assert(preview.querySelector('.faculty-photo img'));
+    assert(preview.querySelector('.preview-all')!.getAttribute('href')!.includes('/faculty/adisak-intana'));
+    assert.equal(container.contains(preview), false, 'Portal must avoid clipping inside the faculty grid');
+    await act(async () => {
+      firstFacultyCard.dispatchEvent(new dom.window.MouseEvent('mouseout', { bubbles: true, relatedTarget: preview }));
+      preview.dispatchEvent(new dom.window.MouseEvent('mouseover', { bubbles: true, relatedTarget: firstFacultyCard }));
+      await new Promise(resolve => setTimeout(resolve, 220));
+    });
+    assert(document.querySelector('.faculty-preview-popup'), 'Moving the pointer into the preview must keep it open');
+    await act(async () => { window.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
+    assert.equal(document.querySelector('.faculty-preview-popup'), null);
+    const noWorksCard = [...container.querySelectorAll('#faculty-directory .faculty-person')].find(element => element.textContent!.includes('KAMAL BAHA'))!;
+    await act(async () => { (noWorksCard as HTMLElement).focus(); });
+    assert(document.querySelector('.faculty-preview-popup .preview-empty')!.textContent!.includes('No records'));
+    await act(async () => { window.dispatchEvent(new dom.window.Event('scroll')); });
+    assert.equal(document.querySelector('.faculty-preview-popup'), null);
+    await act(async () => { (noWorksCard as HTMLElement).blur(); });
     const table = container.querySelector("#publications")!;
     assert(container.querySelector('.data-guide')!.textContent!.includes('October 2025'));
     const bar = container.querySelector('#chart rect[tabindex="0"]')!;

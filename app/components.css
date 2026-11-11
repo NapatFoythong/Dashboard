@@ -1,4 +1,21 @@
 /* React components retain the original dashboard design. */
+.faculty-preview-popup { position: fixed; z-index: 1000; width: min(430px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow-y: auto; padding: 22px; border: 1px solid #b9e3e9; border-top: 4px solid #33c0ca; border-radius: 14px; background: #fff; box-shadow: 0 18px 60px #003c7133; color: var(--ink); }
+.preview-close { position: absolute; top: 8px; right: 8px; padding: 4px 8px; border: 0; background: transparent; }
+.preview-person { display: flex; gap: 14px; align-items: center; padding-right: 8px; }
+.preview-person .faculty-photo { width: 80px; height: 106px; flex: 0 0 80px; border-radius: 8px; }
+.preview-person h3 { margin: 0 0 6px; font-size: 14px; color: var(--psu-navy); overflow-wrap: anywhere; }
+.preview-person p { margin: 4px 0; font-size: 11px; color: var(--muted); }
+.preview-person strong { font-size: 13px; color: #007b89; }
+.preview-scope { font-size: 10px; color: var(--muted); margin: 14px 0 10px; }
+.preview-type-counts { display: flex; flex-wrap: wrap; gap: 6px; }
+.preview-type-counts span { font-size: 10px; background: #f1f8fc; padding: 5px 7px; border-radius: 5px; }
+.faculty-preview-popup h4 { font-size: 12px; margin: 16px 0 8px; color: var(--psu-navy); }
+.preview-works { margin: 0 0 14px; padding-left: 18px; }
+.preview-works li { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
+.preview-works small { color: #008392; }
+.preview-works p { margin: 3px 0 0; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.preview-all { display: block; padding: 10px 12px; border-radius: 7px; background: var(--psu-navy); color: white; text-align: center; text-decoration: none; font-size: 12px; }
+.preview-empty { font-size: 12px; color: var(--muted); }
 aside nav a { display: flex; align-items: center; gap: 12px; min-height: 48px; }
 .sidebar-icon { display: inline-block; width: 20px; height: 20px; flex: 0 0 20px; background-color: currentColor; mask-size: contain; mask-position: center; mask-repeat: no-repeat; -webkit-mask-size: contain; -webkit-mask-position: center; -webkit-mask-repeat: no-repeat; }
 aside nav a.active > .sidebar-icon { color: #008698; }
