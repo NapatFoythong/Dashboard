@@ -1,4 +1,10 @@
 /* React components retain the original dashboard design. */
+aside nav a { display: flex; align-items: center; gap: 12px; min-height: 48px; }
+.sidebar-icon { display: inline-block; width: 20px; height: 20px; flex: 0 0 20px; background-color: currentColor; mask-size: contain; mask-position: center; mask-repeat: no-repeat; -webkit-mask-size: contain; -webkit-mask-position: center; -webkit-mask-repeat: no-repeat; }
+aside nav a.active > .sidebar-icon { color: #008698; }
+footer { flex-wrap: wrap; gap: 10px 18px; }
+.icon-credit { font-size: 9px; color: var(--muted); }
+.icon-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .topic-control { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .topic-control select { margin: 0; width: auto; max-width: 100%; min-width: 200px; }
 .topic-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
