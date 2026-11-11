@@ -1,0 +1,8 @@
+import { createServer } from 'node:http';
+import next from 'next';
+import { localVisitors } from '../server/local-visitors.mjs';
+const port = Number(process.env.PORT || 3000);
+const app = next({ dev: true, hostname: 'localhost', port });
+await app.prepare();
+const handle = app.getRequestHandler();
+createServer(async (req, res) => { if (!await localVisitors(req, res)) await handle(req, res); }).listen(port, () => console.log(`Local: http://localhost:${port}`));

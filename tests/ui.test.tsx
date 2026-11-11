@@ -10,6 +10,7 @@ import Dashboard from "../components/dashboard";
 import LanguageProvider from "../components/language-provider";
 import FacultyProfile from "../components/faculty-profile";
 import ReferenceText from "../components/reference-text";
+import VisitorCounter, { VisitorProvider } from "../components/visitor-counter";
 import { facultyRecords } from "../lib/faculty.ts";
 import { EN_MESSAGES, translate } from "../lib/i18n.ts";
 import { orderWorks } from "../lib/publication-sort.ts";
@@ -188,6 +189,20 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     assert(container.querySelector(".faculty-works h2")!.textContent!.startsWith("Publications by"));
     assert.equal(container.querySelector(".work-detail")!.textContent, facultyRows[0].detail, "CSV publication text must remain unchanged in English");
     assert.equal(container.querySelector('button[aria-label="English"]')!.getAttribute("aria-pressed"), "true");
+    const previousFetch = globalThis.fetch;
+    const visitorIds: string[] = [];
+    try {
+      globalThis.fetch = async (_url, init) => {
+        visitorIds.push(JSON.parse(String(init!.body)).id);
+        return new Response(JSON.stringify({ total: 42 }), { headers: { 'Content-Type': 'application/json' } });
+      };
+      await act(async () => { root.render(<LanguageProvider><VisitorProvider key="first"><VisitorCounter /></VisitorProvider></LanguageProvider>); });
+      assert.equal(container.querySelector('.visitor-counter strong')!.textContent, '42');
+      await act(async () => { root.render(<LanguageProvider><VisitorProvider key="second"><VisitorCounter /></VisitorProvider></LanguageProvider>); });
+      assert.equal(visitorIds.length, 2);
+      assert.equal(visitorIds[0], visitorIds[1], 'Reopening the page must reuse the browser identifier');
+      assert.equal(localStorage.getItem('coc-visitor-id'), visitorIds[0]);
+    } finally { globalThis.fetch = previousFetch; }
   } finally {
     await act(async () => { root.unmount(); });
     dom.window.close();

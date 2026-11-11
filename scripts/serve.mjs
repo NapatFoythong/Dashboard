@@ -1,3 +1,4 @@
+import { localVisitors } from "../server/local-visitors.mjs";
 import { createServer } from "node:http";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
@@ -8,7 +9,8 @@ if (!existsSync(resolve(root, "index.html"))) {
   process.exit(1);
 }
 const types = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".json": "application/json; charset=utf-8", ".txt": "text/plain; charset=utf-8", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".woff2": "font/woff2" };
-const server = createServer((req, res) => {
+const server = createServer(async (req, res) => {
+  if (await localVisitors(req, res)) return;
   let path;
   try { path = resolve(root, "." + decodeURIComponent(new URL(req.url, "http://localhost").pathname)); }
   catch { res.writeHead(400).end("Bad request"); return; }

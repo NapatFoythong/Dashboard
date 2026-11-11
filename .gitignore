@@ -1,4 +1,6 @@
 research/
+.runtime/
+dist/
 research-hosted/
 outputs/
 node_modules/

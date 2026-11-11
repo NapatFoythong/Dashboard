@@ -1,6 +1,9 @@
 export type Language = "th" | "en";
 
 export const EN_MESSAGES: Record<string, string> = {
+  "ผู้เข้าชมเว็บไซต์": "Website visitors",
+  "นับเบราว์เซอร์ไม่ซ้ำตั้งแต่เริ่มเปิดระบบนับ": "Unique browsers since this counter was introduced",
+  "โหลดจำนวนผู้เข้าชมอีกครั้ง": "Retry visitor count",
   "ส่วนแบ่งผลงาน": "Publication share",
   "สีแสดงสัดส่วนของแต่ละสาขา งานที่เกี่ยวข้องหลายสาขาแบ่งสัดส่วนเท่ากัน ความสูงรวมของแท่งยังเท่ากับจำนวนผลงานรวม กดสีเพื่อดูรายการของสาขานั้น": "Colours show each programme's share. Works associated with multiple programmes are split equally, preserving the total bar height. Select a colour to view that programme's records.",
   "อ่านบทความต้นฉบับ": "Read original article",

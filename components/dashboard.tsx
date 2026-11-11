@@ -1,5 +1,6 @@
 "use client";
 import DataGuide from "./data-guide";
+import VisitorCounter from "./visitor-counter";
 import { useLanguage } from "./language-provider";
 import { useMemo, useState } from "react";
 import Filters from "./filters";
@@ -52,7 +53,7 @@ export default function Dashboard({ data }: {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
     return <>
-    <aside><CocBrand /><div className="navlabel">RESEARCH WORKSPACE</div><SidebarNav /><div className="asidefoot"><span className="dot"/>{t("ข้อมูลจากไฟล์ที่นำเข้า")}<small>{t("Publications CV · ตุลาคม 2025")}</small></div></aside>
+    <aside><CocBrand /><div className="navlabel">RESEARCH WORKSPACE</div><SidebarNav /><div className="asidefoot"><span className="dot"/>{t("ข้อมูลจากไฟล์ที่นำเข้า")}<small>{t("Publications CV · ตุลาคม 2025")}</small><VisitorCounter /></div></aside>
     <main id="overview"><header><div className="desktop-breadcrumb">{t("วิทยาลัยการคอมพิวเตอร์ ")}<span>/</span>{t(" ภาพรวมผลงานวิจัย")}</div><CocBrand className="mobile-brand"/><div className="header-actions"><span className="tag">RESEARCH ANALYTICS</span><LanguageSwitcher /></div></header>
       <section className="heading"><div><p className="eyebrow">ACADEMIC PERFORMANCE</p><h1>{t("ผลงานทางวิชาการของอาจารย์")}</h1><p>{t("สำรวจผลงานวิจัย เชื่อมโยงข้อมูล และติดตามแนวโน้มของวิทยาลัยการคอมพิวเตอร์")}</p></div><button id="export" onClick={download}>{t("↓ ส่งออก CSV")}</button></section>
       <Filters filters={filters} years={years} programmes={programmes} indexes={indexes} staff={staff} selected={selected} onChange={next => { setFilters(next); setChartFilter({}); }} onSelect={setSelected} onReset={reset}/>

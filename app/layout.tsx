@@ -4,6 +4,7 @@ import "./globals.css";
 import "./components.css";
 import "./brand.css";
 import LanguageProvider from "@/components/language-provider";
+import { VisitorProvider } from "@/components/visitor-counter";
 
 export const metadata: Metadata = {
   title: "CoC Research | ผลงานทางวิชาการ",
@@ -11,5 +12,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  return <html lang="th"><body><LanguageProvider>{children}</LanguageProvider></body></html>;
+  return <html lang="th"><body><LanguageProvider><VisitorProvider>{children}</VisitorProvider></LanguageProvider></body></html>;
 }

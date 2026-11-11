@@ -4,7 +4,7 @@
 
 ## เริ่มใช้งาน
 
-ต้องมี Node.js 20.9 ขึ้นไป (แนะนำ Node.js 24 LTS เพื่อรันชุดทดสอบ TypeScript ได้โดยตรง)
+ต้องมี Node.js 24 ขึ้นไป เพื่อใช้ SQLite สำหรับเก็บยอดเข้าชมในเครื่องและรันชุดทดสอบ
 
 ```sh
 npm install
@@ -41,9 +41,9 @@ npm run build
 npm start
 ```
 
-Next.js ตั้งค่า `output: "export"` เพื่อเผยแพร่บน Sites เดิม ผลลัพธ์ build อยู่ใน `out/` และ `npm start` ใช้เซิร์ฟเวอร์สำหรับดูผลลัพธ์นี้ในเครื่อง ไม่ใช่ `next start` ซึ่งไม่รองรับ static export
+Next.js ตั้งค่า `output: "export"` ผลลัพธ์หน้าเว็บอยู่ใน `out/` จากนั้น build จะสร้าง Cloudflare Worker ใน `dist/server/` เพื่อให้บริการหน้าเว็บและ API นับผู้เข้าชมบน Sites เดิม `npm start` ใช้เซิร์ฟเวอร์สำหรับดูผลลัพธ์และ API ในเครื่อง ไม่ใช่ `next start`
 
-แก้ข้อมูลใน `data/research.json` แล้ว build ใหม่ ข้อมูลเป็น snapshot จากไฟล์แนบ ไม่อัปเดตจาก Excel/CSV อัตโนมัติ ยังไม่มีฐานข้อมูลหรือระบบล็อกอินในแอป การเข้าถึงเว็บที่เผยแพร่ยังใช้การตั้งค่าแบบส่วนตัวของ Sites
+แก้ข้อมูลใน `data/research.json` แล้ว build ใหม่ ข้อมูลเป็น snapshot จากไฟล์แนบ ไม่อัปเดตจาก Excel/CSV อัตโนมัติ ฐานข้อมูลใช้เฉพาะยอดผู้เข้าชม การเข้าถึงเว็บที่เผยแพร่ยังใช้การตั้งค่าแบบส่วนตัวของ Sites
 
 ลบเว็บ HTML เดิมใน `dist/` แล้ว ให้พัฒนาผ่านซอร์ส Next.js ใน `app/` และ `components/` โดยรัน `npm run dev` จากโฟลเดอร์โปรเจกต์ ไม่ต้องเปิดไฟล์ HTML โดยตรง ส่วน `out/` เป็นผลลัพธ์ที่ Next.js สร้างอัตโนมัติเมื่อ build สำหรับเผยแพร่
 
@@ -64,4 +64,13 @@ Next.js ตั้งค่า `output: "export"` เพื่อเผยแพ�
 ## Article links and chart selections
 
 Article buttons use explicit HTTP(S) URLs or DOI identifiers from the original CSV descriptions. Missing links are stated in publication details. Chart selections filter the table only; the banner can clear that selection. Summary figures retain the global filters. The expandable data guide explains deduplication, faculty row counts, programme credits, and the October 2025 snapshot.
+
+
+## Visitor counter
+
+The lower sidebar shows a shared unique-browser count, starting when this feature is deployed. The browser retains a random UUID in localStorage; the API stores only its SHA-256 hash. Reloads, profile navigation, and concurrent repeat requests do not increment the count. Clearing browser storage or using another browser/device counts again; this is not a count of verified individuals. Without browser storage, the API only reads the count.
+
+Production uses the Sites D1 binding DB and the schema migration in drizzle/. Local dev and preview use .runtime/visitors.sqlite, separate from production. Keep this file to retain local counts; it is ignored by Git and packaging. No IP addresses or names are stored. API responses are never cached, and counter failure shows an unavailable state with retry rather than a fabricated number.
+
+The Worker embeds compressed Next.js output; scripts/build-worker.mjs enforces its module size budget. npm run build creates both the Next.js output and the Worker. The local npm run dev server and npm start both expose /api/visitors. Database migrations must be included when deploying to a different host.
 
