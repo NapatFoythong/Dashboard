@@ -104,7 +104,6 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     const firstFacultyCard = container.querySelector('#faculty-directory .faculty-person')!;
     await act(async () => {
       firstFacultyCard.dispatchEvent(new dom.window.MouseEvent('mouseover', { bubbles: true }));
-      await new Promise(resolve => setTimeout(resolve, 230));
     });
     const preview = document.querySelector('.faculty-preview-popup')!;
     assert(preview, 'Hover should open a preview outside the scrolling grid');
@@ -112,22 +111,18 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     assert.equal(preview.querySelectorAll('.preview-works li').length, 3);
     assert.equal(preview.querySelector('.preview-works p')!.textContent, facultyRecords(data, 'ADISAK INTANA')[0].detail);
     assert(preview.querySelector('.faculty-photo img'));
-    assert(preview.querySelector('.preview-all')!.getAttribute('href')!.includes('/faculty/adisak-intana'));
+    assert.equal(preview.querySelectorAll('a,button').length, 0, 'Hover preview must contain no buttons or links');
     assert.equal(container.contains(preview), false, 'Portal must avoid clipping inside the faculty grid');
-    await act(async () => {
-      firstFacultyCard.dispatchEvent(new dom.window.MouseEvent('mouseout', { bubbles: true, relatedTarget: preview }));
-      preview.dispatchEvent(new dom.window.MouseEvent('mouseover', { bubbles: true, relatedTarget: firstFacultyCard }));
-      await new Promise(resolve => setTimeout(resolve, 220));
-    });
-    assert(document.querySelector('.faculty-preview-popup'), 'Moving the pointer into the preview must keep it open');
-    await act(async () => { window.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
-    assert.equal(document.querySelector('.faculty-preview-popup'), null);
+    await act(async () => { firstFacultyCard.dispatchEvent(new dom.window.MouseEvent('mouseout', { bubbles: true })); });
+    assert.equal(document.querySelector('.faculty-preview-popup'), null, 'Leaving the card must hide the preview');
+    await act(async () => { (firstFacultyCard as HTMLElement).focus(); });
+    assert.equal(document.querySelector('.faculty-preview-popup'), null, 'Focus alone must not open a hover-only preview');
     const noWorksCard = [...container.querySelectorAll('#faculty-directory .faculty-person')].find(element => element.textContent!.includes('KAMAL BAHA'))!;
-    await act(async () => { (noWorksCard as HTMLElement).focus(); });
+    await act(async () => { noWorksCard.dispatchEvent(new dom.window.MouseEvent('mouseover', { bubbles: true })); });
     assert(document.querySelector('.faculty-preview-popup .preview-empty')!.textContent!.includes('No records'));
     await act(async () => { window.dispatchEvent(new dom.window.Event('scroll')); });
     assert.equal(document.querySelector('.faculty-preview-popup'), null);
-    await act(async () => { (noWorksCard as HTMLElement).blur(); });
+    await act(async () => { (firstFacultyCard as HTMLElement).blur(); });
     const table = container.querySelector("#publications")!;
     assert(container.querySelector('.data-guide')!.textContent!.includes('October 2025'));
     const bar = container.querySelector('#chart rect[tabindex="0"]')!;

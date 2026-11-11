@@ -82,5 +82,5 @@ Research topics are keyword-based labels derived from original CSV citation desc
 
 ## Faculty hover preview
 
-Hover or focus a faculty directory card to open a non-modal preview with the verified portrait, name, programmes, all-year CSV row count, publication type counts, and three recent records. The preview is portalled outside the scrolling grid and clamped to the viewport. Moving into it keeps it open; Escape, outside clicks, or scrolling the page dismiss it. Arrow Down from a focused card moves focus into the preview. Counts and recent examples use the same records as the faculty profile.
+Hover a faculty directory card to immediately show a read-only preview with the verified portrait, name, programmes, all-year CSV row count, publication type counts, and three recent records. The preview is portalled outside the scrolling grid and clamped to the viewport. It has no buttons or links and does not intercept pointer input. Leaving the card or scrolling hides it. Focus alone does not open it. Click the original card to open the faculty profile. Counts and recent examples use the same records as that profile.
 
