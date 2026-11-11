@@ -13,7 +13,7 @@ import FacultyDirectory from "./faculty-directory";
 import portraits from "@/data/staff-portraits.json";
 import { canonicalFacultyName } from "@/lib/faculty-identity";
 import { orderWorks, type PublicationSort } from "@/lib/publication-sort";
-import { countWorks, DEFAULT_FILTERS, exportCsv, filterRecords, Filters as FilterValues, groupedCounts, GroupMode, prepareRecords, ResearchData, searchWorks, unique, TYPE_LABELS } from "@/lib/analytics";
+import { countWorks, DEFAULT_FILTERS, filterRecords, Filters as FilterValues, groupedCounts, GroupMode, prepareRecords, ResearchData, searchWorks, unique, TYPE_LABELS } from "@/lib/analytics";
 export default function Dashboard({ data }: {
     data: ResearchData;
 }) {
@@ -44,18 +44,10 @@ export default function Dashboard({ data }: {
         { title: t("ประเภทผลงาน"), value: unique(raw.map(row => row.type)).length, note: t("วารสารและการประชุมวิชาการ") },
     ];
     function reset() { setFilters({ ...DEFAULT_FILTERS }); setSelected(new Set(roster)); setGroup("total"); setQuery(""); setSort("newest"); setChartFilter({}); }
-    function download() {
-        const url = URL.createObjectURL(new Blob([exportCsv(visible)], { type: "text/csv;charset=utf-8" }));
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = `coc-publications-${filters.start}-${filters.end}.csv`;
-        anchor.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
     return <>
     <aside><CocBrand /><div className="navlabel">RESEARCH WORKSPACE</div><SidebarNav /><div className="asidefoot"><span className="dot"/>{t("ข้อมูลจากไฟล์ที่นำเข้า")}<small>{t("Publications CV · ตุลาคม 2025")}</small><VisitorCounter /></div></aside>
     <main id="overview"><header><div className="desktop-breadcrumb">{t("วิทยาลัยการคอมพิวเตอร์ ")}<span>/</span>{t(" ภาพรวมผลงานวิจัย")}</div><CocBrand className="mobile-brand"/><div className="header-actions"><span className="tag">RESEARCH ANALYTICS</span><LanguageSwitcher /></div></header>
-      <section className="heading"><div><p className="eyebrow">ACADEMIC PERFORMANCE</p><h1>{t("ผลงานทางวิชาการของอาจารย์")}</h1><p>{t("สำรวจผลงานวิจัย เชื่อมโยงข้อมูล และติดตามแนวโน้มของวิทยาลัยการคอมพิวเตอร์")}</p></div><button id="export" onClick={download}>{t("↓ ส่งออก CSV")}</button></section>
+      <section className="heading"><div><p className="eyebrow">ACADEMIC PERFORMANCE</p><h1>{t("ผลงานทางวิชาการของอาจารย์")}</h1><p>{t("สำรวจผลงานวิจัย เชื่อมโยงข้อมูล และติดตามแนวโน้มของวิทยาลัยการคอมพิวเตอร์")}</p></div></section>
       <Filters filters={filters} years={years} programmes={programmes} indexes={indexes} staff={staff} selected={selected} onChange={next => { setFilters(next); setChartFilter({}); }} onSelect={setSelected} onReset={reset}/>
       <DataGuide /><div className="stats" aria-live="polite">{statistics.map(stat => <div className="stat" key={stat.title}><label>{stat.title}</label><strong>{stat.value.toLocaleString("en-US")}</strong><small>{stat.note}</small></div>)}</div>
       <p className="chart-hint">{t("กดแท่งกราฟหรือส่วนของกราฟวงกลมเพื่อกรองรายการผลงานด้านล่าง")}</p>
