@@ -24,7 +24,7 @@ export default function FacultyDirectory({ data, portraits }: {
         const original = data.staff.find(row => canonicalFacultyName(row.name) === name)?.name;
         return <Link href={facultyHref(name) + (query.trim() ? `?q=${encodeURIComponent(query.trim())}` : "")} key={name} className="faculty-person"><FacultyPortrait name={name} src={portraits[name]?.image} small/><div><b>{name}</b>{original && original !== name && <small>{t("ชื่อใน Excel: ")}{original}</small>}<small>{t("มีผลงาน {0} ผลงาน", count)}</small></div><span aria-hidden="true">↗</span></Link>;
     };
-    return <section className="card faculty-directory" id="faculty-directory"><div className="cardhead"><div><h2>{t("รายชื่ออาจารย์")}</h2></div><input value={query} onChange={e => setQuery(e.target.value)} placeholder={t("ค้นหาชื่ออาจารย์ หรือหัวข้อ เช่น AI…")} aria-label={t("ค้นหาในรายชื่ออาจารย์")}/></div>
+    return <section className="card faculty-directory" id="faculty-directory"><div className="cardhead"><div><h2>{t("รายชื่ออาจารย์")}</h2></div><input value={query} onChange={e => setQuery(e.target.value)} placeholder={t("ค้นหาชื่ออาจารย์…")} aria-label={t("ค้นหาในรายชื่ออาจารย์")}/></div>
     <TopicNote /><DataGuide faculty /><div className="faculty-grid">{names.map(card)}</div>
     {!names.length && <p>{t("ไม่พบอาจารย์ที่ตรงกับคำค้นหา")}</p>}
   </section>;
