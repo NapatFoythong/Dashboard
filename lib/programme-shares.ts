@@ -1,0 +1,15 @@
+import { COLORS, countWorks, unique, compareText, type Publication, type CountMode } from "./analytics.ts";
+
+export function programmeColor(programme: string) {
+  const index = ["Comp", "DBiz", "DE", "MsComp"].indexOf(programme);
+  return COLORS[index < 0 ? 4 : index];
+}
+
+/** Split each counted work equally across its programmes, conserving the total. */
+export function programmeShares(records: Publication[], years: number[], mode: CountMode) {
+  const groups = unique(records.flatMap(row => row.programmes)).sort(compareText);
+  const yearlyWorks = years.map(year => countWorks(records.filter(row => row.year === year), mode));
+  const series = groups.map(programme => yearlyWorks.map(works => works.reduce((sum, work) =>
+    sum + (work.programmes.includes(programme) ? 1 / work.programmes.length : 0), 0)));
+  return { groups, series, totals: yearlyWorks.map(works => works.length) };
+}

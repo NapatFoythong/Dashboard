@@ -1,6 +1,8 @@
 export type Language = "th" | "en";
 
 export const EN_MESSAGES: Record<string, string> = {
+  "ส่วนแบ่งผลงาน": "Publication share",
+  "สีแสดงสัดส่วนของแต่ละสาขา งานที่เกี่ยวข้องหลายสาขาแบ่งสัดส่วนเท่ากัน ความสูงรวมของแท่งยังเท่ากับจำนวนผลงานรวม กดสีเพื่อดูรายการของสาขานั้น": "Colours show each programme's share. Works associated with multiple programmes are split equally, preserving the total bar height. Select a colour to view that programme's records.",
   "อ่านบทความต้นฉบับ": "Read original article",
   "ไม่มี DOI หรือลิงก์บทความในข้อมูลต้นฉบับ": "No DOI or article link is provided in the source data.",
   "ⓘ วิธีนับและขอบเขตข้อมูล": "ⓘ How counts work and what the data covers",
