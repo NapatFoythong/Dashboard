@@ -84,3 +84,8 @@ Research topics are keyword-based labels derived from original CSV citation desc
 
 Hover a faculty directory card to immediately show a read-only preview with the verified portrait, name, programmes, all-year CSV row count, publication type counts, and three recent records. The preview is portalled outside the scrolling grid and clamped to the viewport. It has no buttons or links and does not intercept pointer input. Leaving the card or scrolling hides it. Focus alone does not open it. Click the original card to open the faculty profile. Counts and recent examples use the same records as that profile.
 
+
+## Dashboard visual refresh
+
+The visual layer is in app/redesign.css, imported after existing styles. The design uses the airy cards and hierarchy of the CRM Dashboard App Design reference (https://dribbble.com/shots/25742359-CRM-Dashboard-App-Design) as inspiration while retaining the CoC palette and original assets. No Dribbble artwork is embedded. Existing filters, charts, chart selections, topics, faculty profiles, hover previews, article links, language switching, and visitor storage are retained. Mobile uses the same sidebar links as a bottom navigation bar and exposes the visitor count in the page footer.
+

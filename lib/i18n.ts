@@ -1,6 +1,13 @@
 export type Language = "th" | "en";
 
 export const EN_MESSAGES: Record<string, string> = {
+  "วิทยาลัยการคอมพิวเตอร์": "College of Computing",
+  "ข้อมูลจากไฟล์ผลงานและรายชื่อหลักสูตร ณ ตุลาคม 2025 รวม {0} รายการ และอาจารย์ในรายชื่อหลัก {1} คน": "Publication and programme roster files as of October 2025 contain {0} source records and {1} faculty members in the main roster.",
+  "นับผลงานไม่ซ้ำจากรายละเอียดที่ตรงกัน ผลงานหนึ่งชิ้นอาจอยู่ได้หลายหลักสูตร ดูวิธีนับเพิ่มเติมในหัวข้อ “วิธีนับและขอบเขตข้อมูล”": "Unique publications are counted by matching descriptions. A publication may belong to multiple programmes. See “How counts work and what the data covers” for details.",
+  "กรณีรายละเอียดซ้ำแต่ปีต่างกัน ใช้ปีของรายการแรกที่ผ่านตัวกรองในการนับผลงานไม่ซ้ำ กราฟรายปีและตารางใช้ปีเดียวกัน ส่วนฐานข้อมูลแสดงค่าที่พบจากผู้เขียนที่เลือกทั้งหมด": "When matching descriptions have different years, unique counting uses the first record that passes the filters. The annual chart and table use that same year. Database labels include all values recorded for the selected authors.",
+  "ช่วงปีที่แสดง": "Displayed period",
+  "อาจารย์ที่เลือก": "Selected faculty",
+  "วิธีนับและขอบเขตข้อมูล": "How counts work and what the data covers",
   "ปิดตัวอย่างอาจารย์": "Close faculty preview",
   "สรุปจาก CSV ทุกปี ไม่ขึ้นกับตัวกรองภาพรวม": "Summary of all CSV years, independent of dashboard filters",
   "ตัวอย่างผลงานล่าสุด": "Recent publication examples",

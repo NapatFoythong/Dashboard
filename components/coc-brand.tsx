@@ -3,9 +3,9 @@ import { useLanguage } from "./language-provider";
 export default function CocBrand({ className = "" }: {
     className?: string;
 }) {
-    const { t, language } = useLanguage();
+    const { t } = useLanguage();
     return <div className={`coc-brand ${className}`}>
-    <img src="/brand/coc-psu-color.png" alt="College of Computing, Prince of Songkla University" width={580} height={126}/>
-    <span>{t("วิทยาลัยการคอมพิวเตอร์ · มหาวิทยาลัยสงขลานครินทร์")}</span>
+    <picture className="brand-image"><img src="/brand/psu-phuket-campus.png" alt="Prince of Songkla University, Phuket Campus" width={671} height={457}/></picture>
+    <span>{t("วิทยาลัยการคอมพิวเตอร์")}</span>
   </div>;
 }

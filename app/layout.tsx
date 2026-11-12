@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import "./components.css";
 import "./brand.css";
+import "./redesign.css";
 import LanguageProvider from "@/components/language-provider";
 import { VisitorProvider } from "@/components/visitor-counter";
 

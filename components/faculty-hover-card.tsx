@@ -40,7 +40,7 @@ export default function FacultyHoverCard({ name, original, portrait, records, pr
     <Link ref={trigger} href={href} className="faculty-person" aria-describedby={open ? id : undefined}
       onMouseEnter={() => setOpen(true)} onMouseMove={() => { if (!open) setOpen(true); }} onMouseLeave={() => setOpen(false)}
       onPointerEnter={event => { if (event.pointerType !== "touch") setOpen(true); }} onPointerLeave={() => setOpen(false)}>
-      <FacultyPortrait name={name} src={portrait?.image} small/><div><b>{name}</b>{original && original !== name && <small>{t("ชื่อใน Excel: ")}{original}</small>}<small>{t("มีผลงาน {0} ผลงาน", records.length)}</small></div><span aria-hidden="true">↗</span>
+      <FacultyPortrait name={name} src={portrait?.image} small/><div><b>{name}</b>{original && original !== name && <small>{t("ชื่อใน Excel: ")}{original}</small>}<small>{t("มีผลงาน {0} ผลงาน", records.length)}</small><span className="faculty-programmes">{programmes.map(programme => <span key={programme}>{programmeLabel(programme)}</span>)}</span></div><span aria-hidden="true">↗</span>
     </Link>
     {open && createPortal(<div ref={panel} id={id} role="tooltip" className="faculty-preview-popup" style={position}>
       <div className="preview-person"><FacultyPortrait name={name} src={portrait?.image}/><div><h3 id={`${id}-title`}>{name}</h3>{portrait?.thaiName && <p>{portrait.thaiName}</p>}<p>{programmes.map(programmeLabel).join(", ")}</p><strong>{t("มีผลงาน {0} ผลงาน", records.length)}</strong></div></div>

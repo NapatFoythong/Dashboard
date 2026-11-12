@@ -1,4 +1,12 @@
 /* React components retain the original dashboard design. */
+.data-guide-icon { display: inline-block; width: 17px; height: 17px; margin-right: 8px; vertical-align: -3px; background: #008698; mask: url('/icons/sources.png') center / contain no-repeat; -webkit-mask: url('/icons/sources.png') center / contain no-repeat; }
+.trend-bar { x: var(--bar-x); y: var(--bar-y); width: var(--bar-width); height: var(--bar-height); transform-box: view-box; transform-origin: 0 228px; transition: x .6s cubic-bezier(.22, 1, .36, 1), y .6s cubic-bezier(.22, 1, .36, 1), width .6s cubic-bezier(.22, 1, .36, 1), height .6s cubic-bezier(.22, 1, .36, 1), fill .4s ease; animation: chart-bar-enter .65s cubic-bezier(.22, 1, .36, 1) both; }
+.interactive-ring svg { transform-origin: center; animation: chart-ring-enter .65s ease-out both; }
+.donut-segment { transition: stroke-dasharray .65s cubic-bezier(.22, 1, .36, 1), stroke-dashoffset .65s cubic-bezier(.22, 1, .36, 1), opacity .4s ease; }
+.rank-filter i, .programme-filter .bar i { transition: width .6s cubic-bezier(.22, 1, .36, 1); }
+@keyframes chart-bar-enter { from { transform: scaleY(0); opacity: .3; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes chart-ring-enter { from { transform: scale(.88) rotate(-12deg); opacity: .3; } to { transform: scale(1) rotate(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .trend-bar, .interactive-ring svg { animation: none; } .trend-bar, .donut-segment, .rank-filter i, .programme-filter .bar i { transition: none; } }
 .faculty-preview-popup { position: fixed; z-index: 10000; pointer-events: none; width: min(430px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow: hidden; padding: 22px; border: 1px solid #b9e3e9; border-top: 4px solid #33c0ca; border-radius: 14px; background: #fff; box-shadow: 0 18px 60px #003c7133; color: var(--ink); }
 .preview-person { display: flex; gap: 14px; align-items: center; padding-right: 8px; }
 .preview-person .faculty-photo { width: 80px; height: 106px; flex: 0 0 80px; border-radius: 8px; }
@@ -100,7 +108,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .faculty-person > span:last-child { margin-left: auto; color: var(--green); }
 .faculty-photo { width: 180px; height: 240px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: #eaf3ed; }
 .faculty-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
-.faculty-photo.small { width: 48px; height: 60px; border-radius: 6px; }
+.faculty-photo.small { width: 64px; height: 80px; flex: 0 0 64px; border-radius: 8px; }
 .photo-placeholder { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; color: var(--green); }
 .photo-placeholder > span { font-size: 32px; }
 .small .photo-placeholder > span { font-size: 16px; }

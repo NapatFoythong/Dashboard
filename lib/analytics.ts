@@ -19,7 +19,7 @@ export interface Publication extends Omit<SourcePublication, "year"> {
   year: number;
   programmes: string[];
 }
-export interface Work extends Publication { authors: string[] }
+export interface Work extends Publication { authors: string[]; indexes?: string[] }
 export type CountMode = "unique" | "records";
 export type GroupMode = "total" | "type" | "programme";
 export interface Filters {
@@ -68,7 +68,7 @@ export function filterRecords(records: Publication[], filters: Filters, selected
 }
 
 export function countWorks(rows: Publication[], mode: CountMode): Work[] {
-  if (mode === "records") return rows.map(row => ({ ...row, authors: [row.name] }));
+  if (mode === "records") return rows.map(row => ({ ...row, authors: [row.name], indexes: [row.index] }));
   const works = new Map<string, Work>();
   for (const row of rows) {
     const key = normalize(row.detail);
@@ -76,8 +76,9 @@ export function countWorks(rows: Publication[], mode: CountMode): Work[] {
     if (existing) {
       existing.authors = unique([...existing.authors, row.name]);
       existing.programmes = unique([...existing.programmes, ...row.programmes]);
+      existing.indexes = unique([...(existing.indexes ?? [existing.index]), row.index]);
     } else {
-      works.set(key, { ...row, authors: [row.name], programmes: [...row.programmes] });
+      works.set(key, { ...row, authors: [row.name], programmes: [...row.programmes], indexes: [row.index] });
     }
   }
   return [...works.values()];

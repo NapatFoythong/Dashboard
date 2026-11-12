@@ -1,6 +1,6 @@
 "use client";
 import { useLanguage } from "./language-provider";
-import { Fragment } from "react";
+import { Fragment, type CSSProperties } from "react";
 import Link from "next/link";
 import { facultyHref } from "@/lib/faculty";
 import { programmeShares, programmeColor } from "@/lib/programme-shares";
@@ -17,8 +17,9 @@ export function TrendChart({ records, start, end, mode, group, onSelect }: Trend
     const { t, language, yearLabel: formatYear, programmeLabel: displayProgramme } = useLanguage();
     const years = Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i);
     const shares = programmeShares(records, years, mode);
+    const works = countWorks(records, mode);
     const groups = group === "total" ? shares.groups : group === "type" ? unique(records.map(r => r.type)) : shares.groups;
-    const series = group === "total" ? shares.series : groups.map(key => years.map(year => countWorks(records.filter(r => r.year === year && (group === "type" ? r.type === key : r.programmes.includes(key))), mode).length));
+    const series = group === "total" ? shares.series : groups.map(key => years.map(year => works.filter(work => work.year === year && (group === "type" ? work.type === key : work.programmes.includes(key))).length));
     const totals = group === "total" ? shares.totals : years.map((_, i) => series.reduce((sum, values) => sum + values[i], 0));
     const top = Math.ceil(Math.max(1, ...totals) / 5) * 5;
     const step = 652 / Math.max(1, years.length), barWidth = Math.min(40, step * .55), height = 213;
@@ -35,7 +36,8 @@ export function TrendChart({ records, start, end, mode, group, onSelect }: Trend
                         const value = group === "total" ? Number(values[i].toFixed(2)) : values[i];
                         const label = `${formatYear(year)} · ${t(TYPE_LABELS[groups[k]]) || displayProgramme(groups[k])}: ${value}${group === "total" ? ` · ${t("ส่วนแบ่งผลงาน")} · ${t("ผลงานรวม")}: ${totals[i]}` : ""}`;
                         const select = () => onSelect?.(year, group === "type" ? groups[k] : undefined, group !== "type" ? groups[k] : undefined);
-                        return <rect key={groups[k]} className="chart-select" role="button" tabIndex={values[i] ? 0 : -1} aria-label={label} onClick={select} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } }} x={36 + i * step + (step - barWidth) / 2} y={bottom} width={barWidth} height={h} rx="2" fill={color(k)}><title>{label}</title></rect>;
+                        const geometry = { "--bar-x": `${36 + i * step + (step - barWidth) / 2}px`, "--bar-y": `${bottom}px`, "--bar-width": `${barWidth}px`, "--bar-height": `${h}px`, animationDelay: `${Math.min(i, 10) * 24}ms` } as CSSProperties;
+                        return <rect key={groups[k]} className="chart-select trend-bar" style={geometry} role="button" tabIndex={values[i] ? 0 : -1} aria-label={label} onClick={select} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } }} x={36 + i * step + (step - barWidth) / 2} y={bottom} width={barWidth} height={h} rx="2" fill={color(k)}><title>{label}</title></rect>;
                     })}{(years.length < 13 || i % Math.ceil(years.length / 10) === 0) && <text x={36 + (i + .5) * step} y="250" textAnchor="middle">{language === "th" ? year + 543 : year}</text>}</g>;
             })}
     </svg>}</div>
@@ -50,7 +52,13 @@ export function TypeChart({ works, onSelect }: {
     const { t, language, yearLabel: formatYear, programmeLabel: displayProgramme } = useLanguage();
     const types = Object.keys(TYPE_LABELS), counts = types.map(type => works.filter(work => work.type === type).length);
     let offset = 0;
-    return <><div id="donut"><div className="ring interactive-ring"><svg viewBox="0 0 100 100" aria-label={t("สัดส่วนผลงาน {0} ผลงาน ดูรายละเอียดด้านล่าง", works.length)}><circle cx="50" cy="50" r="40" fill="none" stroke="#edf1ed" strokeWidth="20" />{types.map((type, i) => { const length = works.length ? counts[i] / works.length * 100 : 0; const start = offset; offset += length; return length > 0 && <circle key={type} className="chart-select" cx="50" cy="50" r="40" fill="none" stroke={COLORS[i]} strokeWidth="20" pathLength="100" strokeDasharray={`${length} ${100 - length}`} strokeDashoffset={-start} transform="rotate(-90 50 50)" role="button" tabIndex={0} aria-label={`${t(TYPE_LABELS[type])}: ${counts[i]}`} onClick={() => onSelect?.(type)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect?.(type); } }} />; })}</svg><div className="ringcenter"><b>{works.length}</b><small>{t("ผลงานทั้งหมด")}</small></div></div></div>
+    return <><div id="donut"><div className="ring interactive-ring pie-chart"><svg viewBox="0 0 100 100" aria-label={t("สัดส่วนผลงาน {0} ผลงาน ดูรายละเอียดด้านล่าง", works.length)}><circle cx="50" cy="50" r="50" fill="#edf2f6" />{types.map((type, i) => { const length = works.length ? counts[i] / works.length * 100 : 0; const start = offset; offset += length;
+      const point = (percentage: number) => {
+        const angle = (percentage / 100 * 360 - 90) * Math.PI / 180;
+        return [50 + 50 * Math.cos(angle), 50 + 50 * Math.sin(angle)].join(' ');
+      };
+      const path = `M 50 50 L ${point(start)} A 50 50 0 0 1 ${point(start + length / 2)} A 50 50 0 0 1 ${point(start + length)} Z`;
+      return <path key={type} className="chart-select pie-segment" d={path} style={{ d: `path("${path}")`, opacity: length > 0 ? 1 : 0, pointerEvents: length > 0 ? "auto" : "none" }} aria-hidden={length === 0} fill={COLORS[i]} role="button" tabIndex={length > 0 ? 0 : -1} aria-label={`${t(TYPE_LABELS[type])}: ${counts[i]}`} onClick={() => onSelect?.(type)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect?.(type); } }} />; })}</svg></div><div className="pie-total"><b>{works.length}</b><small>{t("ผลงานทั้งหมด")}</small></div></div>
     <div id="types">{types.map((type, i) => <button type="button" className="typeitem" key={type} onClick={() => onSelect?.(type)} disabled={!counts[i]}><span><i style={{ background: COLORS[i] }}/>{t(TYPE_LABELS[type])}</span><b>{counts[i]} <span className="percentage">({works.length ? Math.round(counts[i] / works.length * 100) : 0}%)</span></b></button>)}</div></>;
 }
 export function RankedBars({ values, faculty = false, onSelect }: {

@@ -14,7 +14,8 @@ import VisitorCounter, { VisitorProvider } from "../components/visitor-counter";
 import { facultyRecords } from "../lib/faculty.ts";
 import { EN_MESSAGES, translate } from "../lib/i18n.ts";
 import { orderWorks } from "../lib/publication-sort.ts";
-import { countWorks, prepareRecords, type ResearchData } from "../lib/analytics.ts";
+import { countWorks, prepareRecords, filterRecords, DEFAULT_FILTERS, type ResearchData } from "../lib/analytics.ts";
+import { canonicalFacultyName } from "../lib/faculty-identity.ts";
 
 const data: ResearchData = JSON.parse(readFileSync("data/research.json", "utf8"));
 
@@ -95,6 +96,43 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     assert.equal(container.querySelectorAll('#stafflist input:checked').length, 34);
     assert.deepEqual([...container.querySelectorAll('.stats strong')].map(element => element.textContent), ["234", "27", "173", "4"]);
     assert(container.querySelectorAll('.stats small')[1].textContent!.includes("34"));
+    const filterSelects = container.querySelectorAll<HTMLSelectElement>('.filtergrid select');
+    const selectFilter = async (index: number, value: string) => {
+      await act(async () => {
+        filterSelects[index].value = value;
+        filterSelects[index].dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+    };
+    const roster = new Set(data.staff.map(person => canonicalFacultyName(person.name)));
+    for (const scenario of [
+      { start: 2024, end: 2024, programme: '', type: '' },
+      { start: 2020, end: 2024, programme: 'DE', type: 'International Journal Articles' },
+      { start: 2017, end: 2018, programme: '', type: '' },
+      { start: 2020, end: 2024, programme: 'DBiz', type: 'National Proceedings' },
+      { start: 2024, end: 2020, programme: '', type: '' },
+    ]) {
+      await selectFilter(0, String(scenario.start));
+      await selectFilter(1, String(scenario.end));
+      await selectFilter(2, scenario.programme);
+      await selectFilter(3, scenario.type);
+      const expected = countWorks(filterRecords(prepareRecords(data), { ...DEFAULT_FILTERS, ...scenario }, roster), 'unique');
+      assert.equal(Number(container.querySelector('.stats strong')!.textContent), expected.length);
+      assert(container.querySelector('#publications h2')!.textContent!.includes(`(${expected.length})`));
+      assert.equal(Number(container.querySelector('.pie-total b')!.textContent), expected.length);
+      const pieTotal = [...container.querySelectorAll('#types .typeitem b')].reduce((sum, element) => sum + Number(element.textContent!.match(/^\d+/)![0]), 0);
+      assert.equal(pieTotal, expected.length);
+      const years = new Map<number, number>();
+      for (const bar of container.querySelectorAll('#chart rect[role="button"]')) {
+        const label = bar.getAttribute('aria-label')!;
+        const year = Number(label.match(/^\d+/)![0]);
+        years.set(year, Number(label.match(/ผลงานรวม: (\d+)/)![1]));
+      }
+      assert.equal([...years.values()].reduce((sum, value) => sum + value, 0), expected.length);
+      for (const title of container.querySelectorAll('#publications .pubtitle')) {
+        assert(expected.some(work => work.detail === title.textContent));
+      }
+    }
+    await click(container.querySelector('.filtertitle button'));
     await click(container.querySelector('button[aria-label="English"]'));
     assert.equal(document.documentElement.lang, "en");
     assert.equal(localStorage.getItem("coc-language"), "en");
@@ -130,7 +168,7 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     const chartYear = Number(bar.getAttribute('aria-label')!.match(/\d{4}/)![0]);
     assert([...table.querySelectorAll('tbody tr td:first-child b')].every(element => Number(element.textContent) === chartYear));
     await click(container.querySelector('.chart-filter button'));
-    const segment = container.querySelector('#donut circle[role="button"]')!;
+    const segment = container.querySelector('#donut [role="button"]')!;
     await act(async () => { segment.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true })); });
     const chartType = segment.getAttribute('aria-label')!.split(':')[0];
     assert([...table.querySelectorAll('tbody tr td:last-child')].every(element => element.textContent!.startsWith(chartType)));
@@ -174,8 +212,18 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     const picker = table.querySelector(".table-faculty-picker")!;
     assert(picker.querySelector('.table-picker-list')!.textContent!.includes("NOPPON LERTCHUWONGSA"), "Additional CSV faculty must remain available for filtering");
     await click(picker.querySelectorAll(".staffactions button")[1]);
+    assert.deepEqual([...container.querySelectorAll('.stats strong')].map(element => element.textContent), ['0', '0', '0', '0']);
+    assert.equal(container.querySelector('.pie-total b')!.textContent, '0');
     assert(table.querySelector(".empty")!.textContent!.includes("No records"));
     const label = [...picker.querySelectorAll(".table-picker-list label")].find(element => element.textContent === "ADISAK INTANA")!;
+    await click(label.querySelector("input"));
+    const singleWorks = countWorks(filterRecords(prepareRecords(data), DEFAULT_FILTERS, new Set(['ADISAK INTANA'])), 'unique');
+    assert.equal(Number(container.querySelector('.stats strong')!.textContent), singleWorks.length);
+    assert.equal(Number(container.querySelector('.pie-total b')!.textContent), singleWorks.length);
+    await act(async () => { container.querySelector('#chart rect[tabindex="0"]')!.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    assert(container.querySelector('.chart-filter'));
+    await click(label.querySelector("input"));
+    assert.equal(container.querySelector('.chart-filter'), null);
     await click(label.querySelector("input"));
     assert(table.querySelectorAll("tbody .faculty-link").length > 0);
     assert([...table.querySelectorAll("tbody .faculty-link")].every(element => element.textContent === "ADISAK INTANA"));

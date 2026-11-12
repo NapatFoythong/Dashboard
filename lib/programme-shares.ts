@@ -8,7 +8,8 @@ export function programmeColor(programme: string) {
 /** Split each counted work equally across its programmes, conserving the total. */
 export function programmeShares(records: Publication[], years: number[], mode: CountMode) {
   const groups = unique(records.flatMap(row => row.programmes)).sort(compareText);
-  const yearlyWorks = years.map(year => countWorks(records.filter(row => row.year === year), mode));
+  const works = countWorks(records, mode);
+  const yearlyWorks = years.map(year => works.filter(work => work.year === year));
   const series = groups.map(programme => yearlyWorks.map(works => works.reduce((sum, work) =>
     sum + (work.programmes.includes(programme) ? 1 / work.programmes.length : 0), 0)));
   return { groups, series, totals: yearlyWorks.map(works => works.length) };
