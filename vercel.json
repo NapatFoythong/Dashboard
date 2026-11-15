@@ -4,8 +4,7 @@
     "app": {
       "root": ".",
       "framework": "nextjs",
-      "buildCommand": "npx next build",
-      "outputDirectory": "out"
+      "buildCommand": "npx next build"
     },
     "python-api": {
       "root": "python-api",
