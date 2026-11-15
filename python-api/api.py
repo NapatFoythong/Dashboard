@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import asyncio
 from io import BytesIO
 from math import ceil, isfinite
 import hmac
 import os
 from pathlib import Path
+from tempfile import gettempdir
 from typing import Literal
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
+from urllib.request import Request as URLRequest, urlopen
 from xml.etree import ElementTree as ET
 
-MATPLOTLIB_CACHE = Path(__file__).resolve().parent / ".matplotlib_cache"
+MATPLOTLIB_CACHE = Path(os.getenv("MPLCONFIGDIR", str(Path(gettempdir()) / "coc-matplotlib-cache")))
 MATPLOTLIB_CACHE.mkdir(parents=True, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", str(MATPLOTLIB_CACHE))
 
@@ -18,7 +23,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 SVG = "{http://www.w3.org/2000/svg}"
@@ -85,6 +90,7 @@ class PieRequest(BaseModel):
 
 app = FastAPI(title="CoC Matplotlib Charts", docs_url=None, redoc_url=None)
 API_TOKEN = os.getenv("MATPLOTLIB_API_TOKEN", "")
+CLOUDFLARE_VISITORS_API = os.getenv("CLOUDFLARE_VISITORS_API", "").strip().rstrip("/")
 
 
 def authorize(request: Request):
@@ -127,6 +133,52 @@ def set_interactive_metadata(root, gid, attributes, label):
 @app.get("/health")
 def health():
     return {"status": "ok", "renderer": "matplotlib"}
+
+
+@app.api_route("/api/visitors", methods=["GET", "POST"])
+async def visitors(request: Request):
+    if not CLOUDFLARE_VISITORS_API:
+        raise HTTPException(status_code=503, detail="Cloudflare D1 visitor API is not configured")
+
+    if request.method == "POST":
+        origin = request.headers.get("origin", "")
+        forwarded_host = request.headers.get("x-forwarded-host") or request.headers.get("host", "")
+        forwarded_proto = request.headers.get("x-forwarded-proto", "https")
+        expected_origin = f"{forwarded_proto}://{forwarded_host}".rstrip("/")
+        if origin != expected_origin:
+            raise HTTPException(status_code=403, detail="Invalid origin")
+        if int(request.headers.get("content-length", "0") or "0") > 256:
+            raise HTTPException(status_code=413, detail="Too large")
+        body = await request.body()
+        if len(body) > 256:
+            raise HTTPException(status_code=413, detail="Too large")
+    else:
+        body = None
+
+    api_url = f"{CLOUDFLARE_VISITORS_API}/api/visitors"
+    parsed_api_url = urlsplit(CLOUDFLARE_VISITORS_API)
+    headers = {"Origin": f"{parsed_api_url.scheme}://{parsed_api_url.netloc}"}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+    upstream_request = URLRequest(api_url, data=body, headers=headers, method=request.method)
+
+    def forward_request():
+        try:
+            with urlopen(upstream_request, timeout=12) as upstream:
+                return upstream.status, upstream.headers.get("content-type", "application/json"), upstream.read()
+        except HTTPError as error:
+            return error.code, error.headers.get("content-type", "application/json"), error.read()
+
+    try:
+        status, content_type, response_body = await asyncio.to_thread(forward_request)
+    except (URLError, TimeoutError, OSError) as error:
+        raise HTTPException(status_code=503, detail="Cloudflare D1 visitor API unavailable") from error
+    return Response(
+        content=response_body,
+        status_code=status,
+        media_type=content_type.split(";", 1)[0],
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.post("/api/charts/trend")
