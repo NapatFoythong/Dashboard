@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "coc-dashboard-visitors",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-11-16",
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "coc-dashboard-visitors",
+      "database_id": "a8689304-b29b-47a7-adec-4893295eefc6"
+    }
+  ]
+}
