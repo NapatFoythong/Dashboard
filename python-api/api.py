@@ -157,7 +157,10 @@ async def visitors(request: Request):
 
     api_url = f"{CLOUDFLARE_VISITORS_API}/api/visitors"
     parsed_api_url = urlsplit(CLOUDFLARE_VISITORS_API)
-    headers = {"Origin": f"{parsed_api_url.scheme}://{parsed_api_url.netloc}"}
+    headers = {
+        "Origin": f"{parsed_api_url.scheme}://{parsed_api_url.netloc}",
+        "User-Agent": "CoC-Academic-Dashboard/1.0",
+    }
     if body is not None:
         headers["Content-Type"] = "application/json"
     upstream_request = URLRequest(api_url, data=body, headers=headers, method=request.method)
