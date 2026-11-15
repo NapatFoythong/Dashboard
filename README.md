@@ -1,17 +1,30 @@
 # CoC Research Dashboard
 
-แดชบอร์ดผลงานทางวิชาการวิทยาลัยการคอมพิวเตอร์ ใช้ Next.js App Router, React และ TypeScript
+แดชบอร์ดผลงานทางวิชาการวิทยาลัยการคอมพิวเตอร์ ใช้ Next.js App Router, React, TypeScript และ Python Matplotlib API สำหรับวาดกราฟ
 
 ## เริ่มใช้งาน
 
-ต้องมี Node.js 24 ขึ้นไป เพื่อใช้ SQLite สำหรับเก็บยอดเข้าชมในเครื่องและรันชุดทดสอบ
+ต้องมี Node.js 24 ขึ้นไป และ Python 3.11 ขึ้นไป
 
 ```sh
 npm install
+# ติดตั้งครั้งแรกเท่านั้น
+npm run charts:install
+```
+
+เปิด Terminal แรกเพื่อรันเว็บ:
+
+```sh
 npm run dev
 ```
 
-เปิด http://localhost:3000 แล้วแก้หน้าเว็บใน `app/page.tsx` และ `components/` โดยเว็บจะอัปเดตให้อัตโนมัติ
+เปิด Terminal ที่สองเพื่อรันกราฟ API:
+
+```sh
+npm run charts:api
+```
+
+เปิด http://localhost:3000 แล้วแก้หน้าเว็บใน `app/page.tsx` และ `components/` โดยเว็บจะอัปเดตให้อัตโนมัติ กราฟจะทำงานเมื่อทั้งเว็บและ Python API เปิดอยู่พร้อมกัน สคริปต์จะหา Python 3.11+ จาก Python Launcher, PATH หรือโฟลเดอร์ติดตั้งมาตรฐานบน Windows
 
 ## โครงสร้าง
 
@@ -20,7 +33,9 @@ npm run dev
 - `app/globals.css` — สไตล์และ responsive layout
 - `components/dashboard.tsx` — state และสรุปภาพรวม
 - `components/filters.tsx` — ตัวกรองและเลือกอาจารย์
-- `components/charts.tsx` — กราฟและอันดับผลงาน
+- `components/charts.tsx` — ส่งข้อมูลกราฟที่คำนวณตามตัวกรองไปยัง Python API และเชื่อมการคลิกกราฟกับตาราง
+- `python-api/api.py` — สร้างกราฟ SVG ด้วย Matplotlib และคืนเมทาดาทาสำหรับ hover/คลิกกรอง
+- `server/local-charts.mjs` — ส่งต่อคำขอกราฟจากเว็บที่พอร์ต 3000 ไปยัง Python API ที่พอร์ต 8000
 - `components/publication-table.tsx` — ค้นหา ตาราง แบ่งหน้า และรายละเอียด
 - `lib/analytics.ts` — จับคู่หลักสูตร กรอง รวมผลงาน และส่งออก CSV
 - `data/research.json` — ข้อมูลจากไฟล์แนบ 717 รายการ และรายชื่อหลักสูตร 34 คน
@@ -41,7 +56,9 @@ npm run build
 npm start
 ```
 
-Next.js ตั้งค่า `output: "export"` ผลลัพธ์หน้าเว็บอยู่ใน `out/` จากนั้น build จะสร้าง Cloudflare Worker ใน `dist/server/` เพื่อให้บริการหน้าเว็บและ API นับผู้เข้าชมบน Sites เดิม `npm start` ใช้เซิร์ฟเวอร์สำหรับดูผลลัพธ์และ API ในเครื่อง ไม่ใช่ `next start`
+Next.js ตั้งค่า `output: "export"` ผลลัพธ์หน้าเว็บอยู่ใน `out/` จากนั้น build จะสร้าง Cloudflare Worker ใน `dist/server/` เพื่อให้บริการหน้าเว็บและ API นับผู้เข้าชม ส่วน API กราฟต้อง deploy `python-api/` ไปยังบริการที่รัน Python ได้ (มี `python-api/Dockerfile` ให้ใช้) แล้วกำหนดตัวแปร `MATPLOTLIB_API` ของ Worker เป็น URL หลักของ Python API เช่น `https://coc-charts.example.com` Worker จะส่งต่อ `/api/charts/trend` และ `/api/charts/pie` ไปยังบริการนั้น ควรกำหนด secret `MATPLOTLIB_API_TOKEN` ค่าเดียวกันทั้งใน Worker และ Python service เพื่อป้องกันการเรียกสร้างกราฟจากภายนอก `npm start` ใช้เซิร์ฟเวอร์สำหรับดูผลลัพธ์และ API ในเครื่อง ไม่ใช่ `next start`; การดูกราฟต้องเปิด `npm run charts:api` ด้วย
+
+การคำนวณจำนวนผลงานยังใช้ `lib/analytics.ts` และ `lib/programme-shares.ts` เหมือนเดิม เว็บส่งชุดข้อมูลที่คำนวณแล้วไปให้ Matplotlib วาดเป็น SVG กราฟจึงยังเปลี่ยนตามตัวกรอง tooltip ยังแสดงเมื่อชี้เมาส์ และคลิกแท่ง/ชิ้นวงกลมเพื่อกรองตารางได้ แอนิเมชัน SVG ทำงานในเบราว์เซอร์และเคารพการตั้งค่าลดการเคลื่อนไหวของผู้ใช้
 
 แก้ข้อมูลใน `data/research.json` แล้ว build ใหม่ ข้อมูลเป็น snapshot จากไฟล์แนบ ไม่อัปเดตจาก Excel/CSV อัตโนมัติ ฐานข้อมูลใช้เฉพาะยอดผู้เข้าชม การเข้าถึงเว็บที่เผยแพร่ยังใช้การตั้งค่าแบบส่วนตัวของ Sites
 

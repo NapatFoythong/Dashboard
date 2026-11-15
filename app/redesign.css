@@ -397,13 +397,18 @@ button, a, select, input { -webkit-tap-highlight-color: transparent; }
 .publication-toolbar .table-faculty-picker summary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 8px;
   min-height: 42px;
   background: #fff;
   border-color: #cfdfeb;
   border-radius: 9px;
   color: #16476b;
 }
+.publication-toolbar .table-faculty-picker summary .faculty-picker-label,
+.publication-toolbar .table-faculty-picker summary .faculty-picker-count { margin: 0; }
+.publication-toolbar .table-faculty-picker summary .faculty-picker-count { color: var(--brand-ink); font-weight: 600; }
+.publication-toolbar .table-faculty-picker summary .faculty-picker-caret { margin: 0 0 0 auto; color: #6e899d; }
 .publications > .tablewrap { margin: 0 28px; border-radius: 13px; border-color: #e0e9f2; }
 .publications thead th { padding: 16px; background: #edf4fa; color: #365e7e; font-size: 11px; font-weight: 600; white-space: nowrap; border-bottom: 1px solid #dbe8f3; }
 .publications td { padding: 23px 16px; font-size: 12px; border-bottom-color: #e9eff5; }

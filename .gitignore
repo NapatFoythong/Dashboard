@@ -4,6 +4,11 @@ dist/
 research-hosted/
 outputs/
 node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+python-api/.matplotlib_cache/
 .next/
 out/
 *.tsbuildinfo

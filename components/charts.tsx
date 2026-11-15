@@ -1,6 +1,6 @@
 "use client";
 import { useLanguage } from "./language-provider";
-import { Fragment, type CSSProperties } from "react";
+import { Fragment, useEffect, useState, type KeyboardEvent, type MouseEvent } from "react";
 import Link from "next/link";
 import { facultyHref } from "@/lib/faculty";
 import { programmeShares, programmeColor } from "@/lib/programme-shares";
@@ -13,34 +13,87 @@ interface TrendProps {
     group: GroupMode;
     onSelect?: (year: number, type?: string, programme?: string) => void;
 }
+
+type ChartSelection = { year?: number; type?: string; programme?: string };
+type ChartPayload = Record<string, unknown>;
+
+function MatplotlibChart({ endpoint, payload, onSelect }: {
+    endpoint: string;
+    payload: ChartPayload;
+    onSelect: (selection: ChartSelection) => void;
+}) {
+    const { t } = useLanguage();
+    const body = JSON.stringify(payload);
+    const [svg, setSvg] = useState("");
+    const [error, setError] = useState(false);
+    const [attempt, setAttempt] = useState(0);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        setError(false);
+        fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+            cache: "no-store",
+            signal: controller.signal,
+        }).then(async response => {
+            if (!response.ok) throw new Error("Chart API unavailable");
+            const result: { svg?: unknown } = await response.json();
+            if (typeof result.svg !== "string" || !result.svg.trimStart().startsWith("<svg")) throw new Error("Invalid chart response");
+            setSvg(result.svg);
+            setError(false);
+        }).catch(reason => {
+            if (reason?.name !== "AbortError") setError(true);
+        });
+        return () => controller.abort();
+    }, [endpoint, body, attempt]);
+
+    function select(event: MouseEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>) {
+        if (event.type === "keydown") {
+            const keyEvent = event as KeyboardEvent<HTMLDivElement>;
+            if (keyEvent.key !== "Enter" && keyEvent.key !== " ") return;
+            keyEvent.preventDefault();
+        }
+        const target = event.target instanceof Element ? event.target.closest<SVGGElement | SVGPathElement>(".matplotlib-selectable") : null;
+        if (!target) return;
+        const yearValue = target.getAttribute("data-year");
+        const type = target.getAttribute("data-type") || undefined;
+        const programme = target.getAttribute("data-programme") || undefined;
+        onSelect({ year: yearValue ? Number(yearValue) : undefined, type, programme });
+    }
+
+    if (error) return <div className="chart-api-error" role="alert"><span>{t("โหลดกราฟไม่สำเร็จ ตรวจสอบว่า Python API กำลังทำงานอยู่")}</span><button type="button" onClick={() => setAttempt(value => value + 1)}>{t("ลองอีกครั้ง")}</button></div>;
+    if (!svg) return <div className="chart-api-loading" role="status" aria-live="polite">{t("กำลังสร้างกราฟด้วย Matplotlib…")}</div>;
+    return <div className="matplotlib-output" onClick={select} onKeyDown={select} dangerouslySetInnerHTML={{ __html: svg }} />;
+}
+
 export function TrendChart({ records, start, end, mode, group, onSelect }: TrendProps) {
-    const { t, language, yearLabel: formatYear, programmeLabel: displayProgramme } = useLanguage();
+    const { t, language, programmeLabel: displayProgramme } = useLanguage();
     const years = Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i);
     const shares = programmeShares(records, years, mode);
     const works = countWorks(records, mode);
     const groups = group === "total" ? shares.groups : group === "type" ? unique(records.map(r => r.type)) : shares.groups;
     const series = group === "total" ? shares.series : groups.map(key => years.map(year => works.filter(work => work.year === year && (group === "type" ? work.type === key : work.programmes.includes(key))).length));
     const totals = group === "total" ? shares.totals : years.map((_, i) => series.reduce((sum, values) => sum + values[i], 0));
-    const top = Math.ceil(Math.max(1, ...totals) / 5) * 5;
-    const step = 652 / Math.max(1, years.length), barWidth = Math.min(40, step * .55), height = 213;
     const color = (index: number) => group === "type" ? COLORS[index % COLORS.length] : programmeColor(groups[index]);
+    const payload = {
+        years,
+        year_labels: years.map(year => language === "th" ? String(year + 543) : String(year)),
+        totals,
+        group,
+        total_label: t("ผลงานรวม"),
+        aria_label: t("กราฟจำนวนผลงานรายปี"),
+        series: groups.map((key, index) => ({
+            key,
+            label: t(TYPE_LABELS[key]) || displayProgramme(key),
+            color: color(index),
+            values: series[index],
+        })),
+    };
     return <>
     <div className="legend">{groups.map((key, i) => <span key={key}><i style={{ background: color(i) }}/>{t(TYPE_LABELS[key]) || displayProgramme(key)}</span>)}</div>
-    <div id="chart">{!records.length ? <div className="empty">{t("ไม่พบผลงานในเงื่อนไขที่เลือก")}</div> : <svg viewBox="0 0 700 260" role="group" aria-label={t("กราฟจำนวนผลงานรายปี")}>
-      {[0, 1, 2, 3, 4].map(i => <g key={i}><line x1="36" x2="688" y1={15 + height * i / 4} y2={15 + height * i / 4} stroke="#edf1ed"/><text x="28" y={19 + height * i / 4} textAnchor="end">{Math.round(top * (1 - i / 4))}</text></g>)}
-      {years.map((year, i) => {
-                let bottom = 228;
-                return <g key={year}>{series.map((values, k) => {
-                        const h = values[i] / top * height;
-                        bottom -= h;
-                        const value = group === "total" ? Number(values[i].toFixed(2)) : values[i];
-                        const label = `${formatYear(year)} · ${t(TYPE_LABELS[groups[k]]) || displayProgramme(groups[k])}: ${value}${group === "total" ? ` · ${t("ส่วนแบ่งผลงาน")} · ${t("ผลงานรวม")}: ${totals[i]}` : ""}`;
-                        const select = () => onSelect?.(year, group === "type" ? groups[k] : undefined, group !== "type" ? groups[k] : undefined);
-                        const geometry = { "--bar-x": `${36 + i * step + (step - barWidth) / 2}px`, "--bar-y": `${bottom}px`, "--bar-width": `${barWidth}px`, "--bar-height": `${h}px`, animationDelay: `${Math.min(i, 10) * 24}ms` } as CSSProperties;
-                        return <rect key={groups[k]} className="chart-select trend-bar" style={geometry} role="button" tabIndex={values[i] ? 0 : -1} aria-label={label} onClick={select} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } }} x={36 + i * step + (step - barWidth) / 2} y={bottom} width={barWidth} height={h} rx="2" fill={color(k)}><title>{label}</title></rect>;
-                    })}{(years.length < 13 || i % Math.ceil(years.length / 10) === 0) && <text x={36 + (i + .5) * step} y="250" textAnchor="middle">{language === "th" ? year + 543 : year}</text>}</g>;
-            })}
-    </svg>}</div>
+    <div id="chart">{!records.length ? <div className="empty">{t("ไม่พบผลงานในเงื่อนไขที่เลือก")}</div> : <MatplotlibChart endpoint="/api/charts/trend" payload={payload} onSelect={({ year, type, programme }) => { if (year) onSelect?.(year, type, programme); }}/>}</div>
     {group === "total" && <p className="chart-hint">{t("สีแสดงสัดส่วนของแต่ละสาขา งานที่เกี่ยวข้องหลายสาขาแบ่งสัดส่วนเท่ากัน ความสูงรวมของแท่งยังเท่ากับจำนวนผลงานรวม กดสีเพื่อดูรายการของสาขานั้น")}</p>}
     {group === "programme" && <p>{t("แต่ละหลักสูตรได้รับเครดิตเต็ม ผลรวมแท่งอาจสูงกว่าจำนวนผลงานไม่ซ้ำ")}</p>}
   </>;
@@ -49,16 +102,10 @@ export function TypeChart({ works, onSelect }: {
     works: Work[];
     onSelect?: (type: string) => void;
 }) {
-    const { t, language, yearLabel: formatYear, programmeLabel: displayProgramme } = useLanguage();
+    const { t } = useLanguage();
     const types = Object.keys(TYPE_LABELS), counts = types.map(type => works.filter(work => work.type === type).length);
-    let offset = 0;
-    return <><div id="donut"><div className="ring interactive-ring pie-chart"><svg viewBox="0 0 100 100" aria-label={t("สัดส่วนผลงาน {0} ผลงาน ดูรายละเอียดด้านล่าง", works.length)}><circle cx="50" cy="50" r="50" fill="#edf2f6" />{types.map((type, i) => { const length = works.length ? counts[i] / works.length * 100 : 0; const start = offset; offset += length;
-      const point = (percentage: number) => {
-        const angle = (percentage / 100 * 360 - 90) * Math.PI / 180;
-        return [50 + 50 * Math.cos(angle), 50 + 50 * Math.sin(angle)].join(' ');
-      };
-      const path = `M 50 50 L ${point(start)} A 50 50 0 0 1 ${point(start + length / 2)} A 50 50 0 0 1 ${point(start + length)} Z`;
-      return <path key={type} className="chart-select pie-segment" d={path} style={{ d: `path("${path}")`, opacity: length > 0 ? 1 : 0, pointerEvents: length > 0 ? "auto" : "none" }} aria-hidden={length === 0} fill={COLORS[i]} role="button" tabIndex={length > 0 ? 0 : -1} aria-label={`${t(TYPE_LABELS[type])}: ${counts[i]}`} onClick={() => onSelect?.(type)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect?.(type); } }} />; })}</svg></div><div className="pie-total"><b>{works.length}</b><small>{t("ผลงานทั้งหมด")}</small></div></div>
+    const payload = { total: works.length, aria_label: t("สัดส่วนผลงาน {0} ผลงาน ดูรายละเอียดด้านล่าง", works.length), items: types.map((type, index) => ({ key: type, label: t(TYPE_LABELS[type]), color: COLORS[index], value: counts[index] })) };
+    return <><div id="donut"><MatplotlibChart endpoint="/api/charts/pie" payload={payload} onSelect={({ type }) => { if (type) onSelect?.(type); }}/><div className="pie-total"><b>{works.length}</b><small>{t("ผลงานทั้งหมด")}</small></div></div>
     <div id="types">{types.map((type, i) => <button type="button" className="typeitem" key={type} onClick={() => onSelect?.(type)} disabled={!counts[i]}><span><i style={{ background: COLORS[i] }}/>{t(TYPE_LABELS[type])}</span><b>{counts[i]} <span className="percentage">({works.length ? Math.round(counts[i] / works.length * 100) : 0}%)</span></b></button>)}</div></>;
 }
 export function RankedBars({ values, faculty = false, onSelect }: {

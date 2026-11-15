@@ -182,6 +182,9 @@ export const EN_MESSAGES: Record<string, string> = {
   "ประชุมวิชาการนานาชาติ": "International proceedings",
   "วารสารระดับชาติ": "National journal articles",
   "ประชุมวิชาการระดับชาติ": "National proceedings",
+  "กำลังสร้างกราฟด้วย Matplotlib…": "Rendering Matplotlib chart…",
+  "โหลดกราฟไม่สำเร็จ ตรวจสอบว่า Python API กำลังทำงานอยู่": "Could not load chart. Check that the Python API is running.",
+  "ลองอีกครั้ง": "Try again",
 };
 
 export function translate(language: Language, text: string | undefined, ...values: (string | number)[]): string {

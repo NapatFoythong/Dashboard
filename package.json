@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "charts:install": "node scripts/charts-python.mjs --install",
+    "charts:api": "node scripts/charts-python.mjs",
     "build": "next build && node scripts/build-worker.mjs",
     "start": "node scripts/serve.mjs",
     "typecheck": "tsc --noEmit",
