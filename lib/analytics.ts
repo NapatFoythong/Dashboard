@@ -128,7 +128,7 @@ export function searchWorks(works: Work[], query: string, sort: number): Work[] 
 }
 
 export function groupedCounts(records: Publication[], group: "name" | "programme", mode: CountMode) {
-  const keys = unique(records.flatMap(row => group === "name" ? [row.name] : row.programmes));
+  const keys = unique(group === "name" ? records.map(row => row.name) : [...PROGRAMMES, ...records.flatMap(row => row.programmes)]);
   return keys.map(key => ({ key, count: countWorks(records.filter(row =>
     group === "name" ? row.name === key : row.programmes.includes(key)), mode).length }))
     .sort((a, b) => b.count - a.count || compareText(a.key, b.key));

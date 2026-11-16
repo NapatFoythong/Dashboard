@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { countWorks, DEFAULT_FILTERS, exportCsv, filterRecords, groupedCounts, prepareRecords, searchWorks } from "../lib/analytics.ts";
+import { countWorks, DEFAULT_FILTERS, exportCsv, filterRecords, groupedCounts, prepareRecords, PROGRAMMES, searchWorks } from "../lib/analytics.ts";
 import type { ResearchData } from "../lib/analytics.ts";
 import { facultyNames, facultyRecords, facultySlug } from "../lib/faculty.ts";
 import { canonicalFacultyName } from "../lib/faculty-identity.ts";
@@ -33,7 +33,10 @@ test("shared works merge authors and programme credits without mutating source",
   assert.deepEqual(works[0].authors, ["AUTHOR A", "AUTHOR B"]);
   assert.deepEqual(works[0].programmes, ["DE", "COMP"]);
   assert.deepEqual(a.programmes, ["DE"]);
-  assert.equal(groupedCounts([a, b], "programme", "unique").length, 2);
+  const programmeCounts = groupedCounts([a, b], "programme", "unique");
+  assert.equal(programmeCounts.length, PROGRAMMES.length);
+  assert.equal(programmeCounts.find(row => row.key === "DE")?.count, 1);
+  assert.equal(programmeCounts.find(row => row.key === "COMP")?.count, 1);
 });
 test("search, ordering, missing programme and CSV quoting remain usable", () => {
   const found = searchWorks(countWorks(filtered, "unique"), "ontology", -1);
