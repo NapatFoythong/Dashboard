@@ -3,7 +3,7 @@ import { useLanguage } from "./language-provider";
 import { Fragment, useEffect, useState, type KeyboardEvent, type MouseEvent } from "react";
 import Link from "next/link";
 import { facultyHref } from "@/lib/faculty";
-import { programmeShares, programmeColor } from "@/lib/programme-shares";
+import { programmeShares, programmeColor, programmeChartGroup } from "@/lib/programme-shares";
 import { COLORS, CountMode, countWorks, GroupMode, Publication, TYPE_LABELS, unique, Work } from "@/lib/analytics";
 interface TrendProps {
     records: Publication[];
@@ -77,7 +77,7 @@ export function TrendChart({ records, start, end, mode, group, onSelect }: Trend
     const shares = programmeShares(records, years, mode);
     const works = countWorks(records, mode);
     const groups = group === "total" ? shares.groups : group === "type" ? unique(records.map(r => r.type)) : shares.groups;
-    const series = group === "total" ? shares.series : groups.map(key => years.map(year => works.filter(work => work.year === year && (group === "type" ? work.type === key : work.programmes.includes(key))).length));
+    const series = group === "total" ? shares.series : groups.map(key => years.map(year => works.filter(work => work.year === year && (group === "type" ? work.type === key : work.programmes.some(programme => programmeChartGroup(programme) === key))).length));
     const totals = group === "total" ? shares.totals : years.map((_, i) => series.reduce((sum, values) => sum + values[i], 0));
     const color = (index: number) => group === "type" ? COLORS[index % COLORS.length] : programmeColor(groups[index]);
     const payload = {
@@ -97,7 +97,7 @@ export function TrendChart({ records, start, end, mode, group, onSelect }: Trend
     return <>
     <div className="legend">{groups.map((key, i) => <span key={key}><i style={{ background: color(i) }}/>{t(TYPE_LABELS[key]) || displayProgramme(key)}</span>)}</div>
     <div id="chart">{!records.length ? <div className="empty">{t("ไม่พบผลงานในเงื่อนไขที่เลือก")}</div> : <MatplotlibChart endpoint="/api/charts/trend" payload={payload} onSelect={({ year, type, programme }) => { if (year) onSelect?.(year, type, programme); }}/>}</div>
-    {group === "total" && <p className="chart-hint">{t("สีแสดงสัดส่วนของแต่ละสาขา งานที่เกี่ยวข้องหลายสาขาแบ่งสัดส่วนเท่ากัน ความสูงรวมของแท่งยังเท่ากับจำนวนผลงานรวม กดสีเพื่อดูรายการของสาขานั้น")}</p>}
+    {group === "total" && <p className="chart-hint">{t("กราฟนี้รวม DE และ AISE เป็นหมวดเดียว งานที่เกี่ยวข้องหลายหมวดแบ่งสัดส่วนเท่ากัน ความสูงรวมของแท่งยังเท่ากับจำนวนผลงานรวม กดสีเพื่อดูรายการของหมวดนั้น")}</p>}
     {group === "programme" && <p>{t("แต่ละหลักสูตรได้รับเครดิตเต็ม ผลรวมแท่งอาจสูงกว่าจำนวนผลงานไม่ซ้ำ")}</p>}
   </>;
 }

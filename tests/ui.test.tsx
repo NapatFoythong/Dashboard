@@ -122,6 +122,7 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     for (const scenario of [
       { start: 2024, end: 2024, programme: '', type: '' },
       { start: 2020, end: 2024, month: '2', programme: '', type: '' },
+      { start: 2020, end: 2024, programme: 'AISE', type: '' },
       { start: 2020, end: 2024, programme: 'DE', type: 'International Journal Articles' },
       { start: 2017, end: 2018, programme: '', type: '' },
       { start: 2020, end: 2024, programme: 'Dbiz', type: 'National Proceedings' },
@@ -208,7 +209,8 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     const programmeBar = container.querySelector('.programme-filter')!;
     const chartProgramme = programmeBar.querySelector('.programme-label > span')!.textContent!;
     await click(programmeBar);
-    assert([...table.querySelectorAll('tbody tr td:nth-child(3) small')].every(element => element.textContent!.includes(chartProgramme)));
+    const displayedProgrammes = chartProgramme === 'DE / AISE' ? ['DE', 'AISE'] : [chartProgramme];
+    assert([...table.querySelectorAll('tbody tr td:nth-child(3) small')].every(element => displayedProgrammes.some(programme => element.textContent!.includes(programme))));
     await click(container.querySelector('.chart-filter button'));
     const article = table.querySelector('.article-links a')!;
     assert(article.getAttribute('href')!.startsWith('http'));
