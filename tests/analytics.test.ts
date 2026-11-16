@@ -27,11 +27,11 @@ test("year boundaries, no selected staff, and combined filters", () => {
 });
 test("shared works merge authors and programme credits without mutating source", () => {
   const a = { ...records[0], name: "AUTHOR A", programmes: ["DE"] };
-  const b = { ...a, id: 1000, name: "AUTHOR B", detail: ` ${a.detail.toUpperCase()} `, programmes: ["Comp"] };
+  const b = { ...a, id: 1000, name: "AUTHOR B", detail: ` ${a.detail.toUpperCase()} `, programmes: ["COMP"] };
   const works = countWorks([a, b], "unique");
   assert.equal(works.length, 1);
   assert.deepEqual(works[0].authors, ["AUTHOR A", "AUTHOR B"]);
-  assert.deepEqual(works[0].programmes, ["DE", "Comp"]);
+  assert.deepEqual(works[0].programmes, ["DE", "COMP"]);
   assert.deepEqual(a.programmes, ["DE"]);
   assert.equal(groupedCounts([a, b], "programme", "unique").length, 2);
 });
@@ -94,7 +94,7 @@ test("faculty pages preserve every CSV row under its exact author name", () => {
   assert.equal(facultyRecords(data, "MONCHANOK").length, 1);
   assert.equal(facultyRecords(data, "MONCHANOK THONGTHEP").length, 1);
   assert.deepEqual(facultyRecords(data, "MONCHANOK"), facultyRecords(data, "MONCHANOK THONGTHEP"));
-  assert.deepEqual(facultyRecords(data, "MONCHANOK")[0].programmes, ["DBiz"]);
+  assert.deepEqual(facultyRecords(data, "MONCHANOK")[0].programmes, ["Dbiz"]);
 });
 
 test("portrait mapping uses verified full names and existing local files", () => {

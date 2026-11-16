@@ -30,6 +30,7 @@ function MatplotlibChart({ endpoint, payload, onSelect }: {
 
     useEffect(() => {
         const controller = new AbortController();
+        setSvg("");
         setError(false);
         fetch(endpoint, {
             method: "POST",
@@ -38,8 +39,10 @@ function MatplotlibChart({ endpoint, payload, onSelect }: {
             cache: "no-store",
             signal: controller.signal,
         }).then(async response => {
+            if (controller.signal.aborted) return;
             if (!response.ok) throw new Error("Chart API unavailable");
             const result: { svg?: unknown } = await response.json();
+            if (controller.signal.aborted) return;
             if (typeof result.svg !== "string" || !result.svg.trimStart().startsWith("<svg")) throw new Error("Invalid chart response");
             setSvg(result.svg);
             setError(false);

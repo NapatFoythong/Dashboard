@@ -52,6 +52,7 @@ export const yearLabel = (year: number) => `${year + 543} (${year})`;
 export const unique = <T,>(values: T[]): T[] => [...new Set(values)];
 export const PROGRAMMES = ["AISE", "DE", "COMP", "Dbiz"] as const;
 export type Programme = typeof PROGRAMMES[number];
+export const UNASSIGNED_PROGRAMME = "ยังไม่ระบุหลักสูตร";
 export function canonicalProgramme(value: string): Programme | null {
   const normalized = value.trim().toLowerCase();
   if (normalized === "aise") return "AISE";
@@ -62,6 +63,10 @@ export function canonicalProgramme(value: string): Programme | null {
 }
 export function canonicalProgrammes(values: string[]): Programme[] {
   return unique(values.map(canonicalProgramme).filter((value): value is Programme => value !== null));
+}
+export function assignedProgrammes(values: string[]): string[] {
+  const programmes = canonicalProgrammes(values);
+  return programmes.length ? programmes : [UNASSIGNED_PROGRAMME];
 }
 export const programmeLabel = (value: string) => canonicalProgramme(value) ?? value;
 
@@ -86,7 +91,7 @@ export function prepareRecords(data: ResearchData, programmeOverrides: Record<st
   return data.publications.map((row, id) => ({
     ...row, id, recordKey: `source-${id}-${hashSourceRow(`${row.name}|${row.type}|${row.detail}|${row.year}|${row.month}`)}`,
     year: Number(row.year), index: row.index.trim(),
-    programmes: canonicalProgrammes(row.programmes ?? programmeOverrides[canonicalFacultyName(row.name)] ?? mapping.get(canonicalFacultyName(row.name)) ?? []),
+    programmes: assignedProgrammes(row.programmes ?? programmeOverrides[canonicalFacultyName(row.name)] ?? mapping.get(canonicalFacultyName(row.name)) ?? []),
   }));
 }
 

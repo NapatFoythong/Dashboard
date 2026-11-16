@@ -2,7 +2,7 @@ import { COLORS, countWorks, unique, compareText, type Publication, type CountMo
 
 export function programmeColor(programme: string) {
   const index = ["COMP", "Dbiz", "DE", "AISE"].indexOf(programme);
-  return COLORS[index < 0 ? 0 : index];
+  return index < 0 ? "#8b9aad" : COLORS[index];
 }
 
 /** Split each counted work equally across its programmes, conserving the total. */

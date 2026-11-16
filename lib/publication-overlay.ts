@@ -1,5 +1,5 @@
 import { canonicalFacultyName } from "./faculty-identity.ts";
-import { canonicalProgrammes, prepareRecords, type Publication, type ResearchData } from "./analytics.ts";
+import { assignedProgrammes, canonicalProgrammes, prepareRecords, type Publication, type ResearchData } from "./analytics.ts";
 
 export interface StoredPublication {
   id: string;
@@ -23,7 +23,7 @@ export const EMPTY_PUBLICATION_OVERLAY: PublicationOverlay = { added: [], hidden
 export function mergePublications(data: ResearchData, overlay: PublicationOverlay): Publication[] {
   const hidden = new Set(overlay.hidden);
   const base = prepareRecords(data, overlay.programmes).filter(row => !hidden.has(row.recordKey));
-  const mapping = new Map(data.staff.map(person => [canonicalFacultyName(person.name), canonicalProgrammes(overlay.programmes[canonicalFacultyName(person.name)] ?? person.programmes)] as const));
+  const mapping = new Map(data.staff.map(person => [canonicalFacultyName(person.name), assignedProgrammes(overlay.programmes[canonicalFacultyName(person.name)] ?? person.programmes)] as const));
   const added = overlay.added.map((row, index) => ({
     ...row,
     id: data.publications.length + index,
@@ -31,7 +31,7 @@ export function mergePublications(data: ResearchData, overlay: PublicationOverla
     year: Number(row.year),
     month: String(row.month),
     index: row.index.trim(),
-    programmes: mapping.get(canonicalFacultyName(row.name)) ?? canonicalProgrammes(overlay.programmes[canonicalFacultyName(row.name)] ?? []),
+    programmes: mapping.get(canonicalFacultyName(row.name)) ?? assignedProgrammes(overlay.programmes[canonicalFacultyName(row.name)] ?? []),
   } satisfies Publication));
   return [...base, ...added];
 }

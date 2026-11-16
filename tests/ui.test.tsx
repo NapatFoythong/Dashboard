@@ -79,7 +79,7 @@ test("all explicit Thai UI messages have English translations and preserve place
 
 test("flag clicks, table faculty selection, sorting, and saved-language hydration work together", async () => {
   const dom = new JSDOM('<!doctype html><html lang="th"><body><div id="root"></div></body></html>', { url: "http://localhost:3100", pretendToBeVisual: true });
-  for (const key of ["window", "document", "navigator", "localStorage", "HTMLElement", "HTMLInputElement", "HTMLSelectElement", "MouseEvent", "Event", "Node"] as const) {
+  for (const key of ["window", "document", "navigator", "localStorage", "Element", "HTMLElement", "HTMLInputElement", "HTMLSelectElement", "MouseEvent", "Event", "Node"] as const) {
     Object.defineProperty(globalThis, key, { configurable: true, value: key === "window" ? dom.window : dom.window[key] });
   }
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -89,6 +89,19 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
   const container = document.getElementById("root")!;
   const app = <LanguageProvider><Dashboard data={data} /></LanguageProvider>;
   let root = createRoot(container);
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    if (url === "/api/charts/trend" || url === "/api/charts/pie") {
+      if (init?.signal?.aborted) throw new DOMException("Aborted", "AbortError");
+      const payload = JSON.parse(String(init?.body));
+      const svg = url.endsWith("trend")
+        ? `<svg>${payload.years.map((year: number, index: number) => `<rect class="matplotlib-selectable" role="button" tabindex="0" aria-label="${year} · ผลงานรวม: ${payload.totals[index]}" data-year="${year}"/>`).join("")}</svg>`
+        : `<svg>${payload.items.filter((item: { value: number }) => item.value > 0).map((item: { key: string; label: string; value: number }) => `<path class="matplotlib-selectable" role="button" tabindex="0" aria-label="${item.label}: ${item.value}" data-type="${item.key}"/>`).join("")}</svg>`;
+      return new Response(JSON.stringify({ svg }), { headers: { "Content-Type": "application/json" } });
+    }
+    return originalFetch(input, init);
+  };
   const click = async (element: Element | null) => { assert(element); await act(async () => { (element as HTMLElement).click(); }); };
   try {
     await act(async () => { root.render(app); });
@@ -97,24 +110,28 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
     assert.deepEqual([...container.querySelectorAll('.stats strong')].map(element => element.textContent), ["234", "27", "173", "4"]);
     assert(container.querySelectorAll('.stats small')[1].textContent!.includes("34"));
     const filterSelects = container.querySelectorAll<HTMLSelectElement>('.filtergrid select');
+    assert.equal(filterSelects[1].value, "2024", "The default period must exclude the incomplete 2025 source year");
     const selectFilter = async (index: number, value: string) => {
       await act(async () => {
         filterSelects[index].value = value;
         filterSelects[index].dispatchEvent(new dom.window.Event('change', { bubbles: true }));
       });
+      await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
     };
     const roster = new Set(data.staff.map(person => canonicalFacultyName(person.name)));
     for (const scenario of [
       { start: 2024, end: 2024, programme: '', type: '' },
+      { start: 2020, end: 2024, month: '2', programme: '', type: '' },
       { start: 2020, end: 2024, programme: 'DE', type: 'International Journal Articles' },
       { start: 2017, end: 2018, programme: '', type: '' },
-      { start: 2020, end: 2024, programme: 'DBiz', type: 'National Proceedings' },
+      { start: 2020, end: 2024, programme: 'Dbiz', type: 'National Proceedings' },
       { start: 2024, end: 2020, programme: '', type: '' },
     ]) {
       await selectFilter(0, String(scenario.start));
       await selectFilter(1, String(scenario.end));
-      await selectFilter(2, scenario.programme);
-      await selectFilter(3, scenario.type);
+      await selectFilter(2, scenario.month ?? '');
+      await selectFilter(3, scenario.programme);
+      await selectFilter(4, scenario.type);
       const expected = countWorks(filterRecords(prepareRecords(data), { ...DEFAULT_FILTERS, ...scenario }, roster), 'unique');
       assert.equal(Number(container.querySelector('.stats strong')!.textContent), expected.length);
       assert(container.querySelector('#publications h2')!.textContent!.includes(`(${expected.length})`));
@@ -126,6 +143,15 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
         const label = bar.getAttribute('aria-label')!;
         const year = Number(label.match(/^\d+/)![0]);
         years.set(year, Number(label.match(/ผลงานรวม: (\d+)/)![1]));
+      }
+      for (let attempt = 0; attempt < 20 && [...years.values()].reduce((sum, value) => sum + value, 0) !== expected.length; attempt++) {
+        await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); });
+        years.clear();
+        for (const bar of container.querySelectorAll('#chart rect[role="button"]')) {
+          const label = bar.getAttribute('aria-label')!;
+          const year = Number(label.match(/^\d+/)![0]);
+          years.set(year, Number(label.match(/ผลงานรวม: (\d+)/)![1]));
+        }
       }
       assert.equal([...years.values()].reduce((sum, value) => sum + value, 0), expected.length);
       for (const title of container.querySelectorAll('#publications .pubtitle')) {
@@ -205,7 +231,7 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
       const rows = [...table.querySelectorAll('tbody tr td:last-child')];
       assert(rows.length > 0);
       assert(rows.every(element => element.textContent!.startsWith(option.text)));
-      assert.equal((container.querySelector('.filtergrid label:nth-child(4) select') as HTMLSelectElement).value, option.value);
+      assert.equal((container.querySelector('.filtergrid label:nth-child(5) select') as HTMLSelectElement).value, option.value);
     }
     await act(async () => { typeFilter.value = ""; typeFilter.dispatchEvent(new dom.window.Event("change", { bubbles: true })); });
     assert.equal(container.querySelector('.stats strong')!.textContent, "234");
@@ -283,6 +309,7 @@ test("flag clicks, table faculty selection, sorting, and saved-language hydratio
       assert.equal(localStorage.getItem('coc-visitor-id'), visitorIds[0]);
     } finally { globalThis.fetch = previousFetch; }
   } finally {
+    globalThis.fetch = originalFetch;
     await act(async () => { root.unmount(); });
     dom.window.close();
   }
