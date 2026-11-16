@@ -3,7 +3,7 @@ import DataGuide from "./data-guide";
 import VisitorCounter from "./visitor-counter";
 import { researchTopics } from "@/lib/research-topics";
 import { useLanguage } from "./language-provider";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Filters from "./filters";
 import { RankedBars, TrendChart, TypeChart } from "./charts";
 import PublicationTable from "./publication-table";
@@ -14,19 +14,43 @@ import FacultyDirectory from "./faculty-directory";
 import portraits from "@/data/staff-portraits.json";
 import { canonicalFacultyName } from "@/lib/faculty-identity";
 import { orderWorks, type PublicationSort } from "@/lib/publication-sort";
-import { countWorks, DEFAULT_FILTERS, filterRecords, Filters as FilterValues, groupedCounts, GroupMode, prepareRecords, ResearchData, searchWorks, unique, TYPE_LABELS } from "@/lib/analytics";
+import { canonicalProgrammes, countWorks, DEFAULT_FILTERS, filterRecords, Filters as FilterValues, groupedCounts, GroupMode, PROGRAMMES, ResearchData, searchWorks, unique, TYPE_LABELS } from "@/lib/analytics";
+import { EMPTY_PUBLICATION_OVERLAY, mergePublications, parsePublicationOverlay, type PublicationOverlay } from "@/lib/publication-overlay";
 export default function Dashboard({ data }: {
     data: ResearchData;
 }) {
     const { t, language, yearLabel, programmeLabel } = useLanguage();
-    const records = useMemo(() => prepareRecords(data), [data]);
+    const [overlay, setOverlay] = useState<PublicationOverlay>(EMPTY_PUBLICATION_OVERLAY);
+    useEffect(() => {
+      let alive = true;
+      fetch("/api/publications", { cache: "no-store" }).then(response => response.ok ? response.json() : null)
+        .then(value => { if (alive && value) setOverlay(parsePublicationOverlay(value)); })
+        .catch(() => { /* Static CSV data remains available when D1 has not been configured. */ });
+      return () => { alive = false; };
+    }, []);
+    const records = useMemo(() => mergePublications(data, overlay), [data, overlay]);
     const staff = useMemo(() => unique([...data.staff.map(person => canonicalFacultyName(person.name)), ...records.map(row => row.name)]).sort(), [data, records]);
     const roster = useMemo(() => data.staff.map(person => canonicalFacultyName(person.name)), [data]);
-    const programmes = useMemo(() => unique(records.flatMap(row => row.programmes)).sort(), [records]);
+    const effectiveData = useMemo<ResearchData>(() => ({
+      staff: data.staff.map(person => {
+        const name = canonicalFacultyName(person.name);
+        return { ...person, programmes: canonicalProgrammes(overlay.programmes[name] ?? person.programmes) };
+      }),
+      publications: records.map(({ id: _id, year, ...row }) => ({ ...row, year: String(year) })),
+    }), [data, records, overlay.programmes]);
+    const programmes = useMemo(() => [...PROGRAMMES], []);
     const indexes = useMemo(() => unique(records.map(row => row.index)).sort(), [records]);
     const years = useMemo(() => { const values = records.map(row => row.year); const first = Math.min(...values); return Array.from({ length: Math.max(...values) - first + 1 }, (_, i) => first + i); }, [records]);
     const [filters, setFilters] = useState<FilterValues>({ ...DEFAULT_FILTERS });
+    const [filtersTouched, setFiltersTouched] = useState(false);
+    useEffect(() => {
+      if (!filtersTouched && years.length) setFilters(current => ({ ...current, end: years[years.length - 1] }));
+    }, [years, filtersTouched]);
     const [selected, setSelected] = useState(() => new Set(roster));
+    useEffect(() => {
+      const addedAuthors = records.filter(row => row.recordKey.startsWith("added-")).map(row => row.name);
+      if (addedAuthors.length) setSelected(current => new Set([...current, ...addedAuthors]));
+    }, [records, data.publications.length]);
     const [group, setGroup] = useState<GroupMode>("total");
     const [query, setQuery] = useState("");
     const [sort, setSort] = useState<PublicationSort>("newest");
@@ -45,7 +69,7 @@ export default function Dashboard({ data }: {
         { title: t("ผลงานในฐาน Scopus"), value: scopus, note: t("{0}% ของผลงานที่แสดง", works.length ? Math.round(scopus / works.length * 100) : 0) },
         { title: t("ประเภทผลงาน"), value: unique(raw.map(row => row.type)).length, note: t("วารสารและการประชุมวิชาการ") },
     ];
-    function reset() { setFilters({ ...DEFAULT_FILTERS }); setSelected(new Set(roster)); setGroup("total"); setQuery(""); setSort("newest"); setTopic(""); setChartFilter({}); }
+    function reset() { setFiltersTouched(false); setFilters({ ...DEFAULT_FILTERS, end: years[years.length - 1] ?? DEFAULT_FILTERS.end }); setSelected(new Set(roster)); setGroup("total"); setQuery(""); setSort("newest"); setTopic(""); setChartFilter({}); }
     return <>
     <aside><CocBrand /><div className="navlabel">RESEARCH WORKSPACE</div><SidebarNav /><div className="asidefoot"><span className="dot"/>{t("ข้อมูลจากไฟล์ที่นำเข้า")}<small>{t("Publications CV · ตุลาคม 2025")}</small><VisitorCounter /></div></aside>
     <main id="overview"><header><div className="desktop-breadcrumb">{t("วิทยาลัยการคอมพิวเตอร์ ")}<span>/</span>{t(" ภาพรวมผลงานวิจัย")}</div><CocBrand className="mobile-brand"/><div className="header-actions"><LanguageSwitcher /></div></header>
@@ -67,23 +91,23 @@ export default function Dashboard({ data }: {
         <circle cx="274" cy="102" r="5" fill="#c63141"/>
         <circle cx="143" cy="28" r="4" fill="#84bccd"/>
       </svg></section>
-      <Filters filters={filters} years={years} programmes={programmes} indexes={indexes} staff={staff} selected={selected} onChange={next => { setFilters(next); setChartFilter({}); }} onSelect={selectFaculty} onReset={reset}/>
+      <Filters filters={filters} years={years} programmes={programmes} indexes={indexes} staff={staff} selected={selected} onChange={next => { setFiltersTouched(true); setFilters(next); setChartFilter({}); }} onSelect={selectFaculty} onReset={reset}/>
       <DataGuide /><div className="stats" aria-live="polite">{statistics.map(stat => <div className="stat" key={stat.title}><label>{stat.title}</label><strong>{stat.value.toLocaleString("en-US")}</strong><small>{stat.note}</small></div>)}</div>
       <p className="chart-hint">{t("กดแท่งกราฟหรือส่วนของกราฟวงกลมเพื่อกรองรายการผลงานด้านล่าง")}</p>
       <div className="charts"><section className="card trend"><div className="cardhead"><div><h2>{t("แนวโน้มผลงานทางวิชาการ")}</h2><p>{t("จำนวนผลงานในแต่ละปีตามตัวกรองที่เลือก")}</p></div><select value={group} onChange={e => setGroup(e.target.value as GroupMode)} aria-label={t("แยกกราฟตาม")}><option value="total">{t("ผลงานรวม")}</option><option value="type">{t("แยกตามประเภท")}</option><option value="programme">{t("แยกตามหลักสูตร")}</option></select></div><TrendChart records={raw} start={filters.start} end={filters.end} mode={filters.count} group={group} onSelect={(year, type, programme) => selectChart(year, type, programme)}/></section>
         <section className="card type-chart-card"><div className="cardhead"><div><h2>{t("สัดส่วนประเภทผลงาน")}</h2><p>{t("ภาพรวมการเผยแพร่ทางวิชาการ")}</p></div></div><TypeChart works={works} onSelect={type => selectChart(undefined, type)}/></section></div>
       <div className="lower"><section className="card" id="faculty"><div className="cardhead"><div><h2>{t("อาจารย์ที่มีผลงานสูงสุด")}</h2><p>{t("จำนวนผลงานของแต่ละคนในช่วงที่เลือก")}</p></div><span className="tag">TOP 8</span></div><RankedBars values={groupedCounts(raw, "name", filters.count).slice(0, 8)} faculty onSelect={author => selectChart(undefined, undefined, undefined, author)}/></section>
         <section className="card"><div className="cardhead"><div><h2>{t("ผลงานตามหลักสูตร")}</h2><p>{t("ผลงานหนึ่งชิ้นอาจเกี่ยวข้องกับหลายหลักสูตร")}</p></div></div><RankedBars values={groupedCounts(raw, "programme", filters.count)} onSelect={programme => selectChart(undefined, undefined, programme)}/></section></div>
-      <FacultyDirectory data={data} portraits={portraits}/>
+      <FacultyDirectory data={effectiveData} portraits={portraits}/>
       {Object.keys(chartFilter).some(key => chartFilter[key as keyof typeof chartFilter]) && <div className="chart-filter" role="status"><span>{t("ตารางกรองจากกราฟ:")} {[chartFilter.year && yearLabel(chartFilter.year), chartFilter.type && t(TYPE_LABELS[chartFilter.type]), chartFilter.programme && programmeLabel(chartFilter.programme), chartFilter.author].filter(Boolean).join(" · ")}</span><button onClick={() => setChartFilter({})}>{t("ล้างตัวกรองจากกราฟ")}</button></div>}
       <PublicationTable topic={topic} onTopicChange={setTopic} type={filters.type} onTypeChange={type => { setFilters(current => ({ ...current, type })); setChartFilter({}); }} works={visible} query={query} onSearch={setQuery} sort={sort} onSort={setSort} staff={staff} selected={selected} onSelect={selectFaculty}/>
       <section className="source" id="sources">
         <b>{t("เกี่ยวกับข้อมูลและวิธีนับ")}</b>
-        <p>{t("ข้อมูลจากไฟล์ผลงานและรายชื่อหลักสูตร ณ ตุลาคม 2025 รวม {0} รายการ และอาจารย์ในรายชื่อหลัก {1} คน", records.length, data.staff.length)}</p>
+        <p>{t("ข้อมูลจากไฟล์ผลงานและรายชื่อหลักสูตร ณ ตุลาคม 2025 รวม {0} รายการ และอาจารย์ในรายชื่อหลัก {1} คน", data.publications.length, data.staff.length)}</p>
         <p>{t("นับผลงานไม่ซ้ำจากรายละเอียดที่ตรงกัน ผลงานหนึ่งชิ้นอาจอยู่ได้หลายหลักสูตร ดูวิธีนับเพิ่มเติมในหัวข้อ “วิธีนับและขอบเขตข้อมูล”")}</p>
       </section>
       <div className="mobile-visitor"><VisitorCounter /></div>
-      <footer>CoC Research <span>Academic publications dashboard</span><span className="icon-credit">Icons designed by <a href="https://www.flaticon.com/authors/freepik" target="_blank" rel="noopener noreferrer">Freepik / Magnific</a> from <a href="https://www.flaticon.com/" target="_blank" rel="noopener noreferrer">Flaticon</a></span></footer>
+      <footer>CoC Research <span>Academic publications dashboard</span><a className="staff-entry-link" href="/staff/login/">{t("เข้าสู่ระบบเจ้าหน้าที่")}</a><span className="icon-credit">Icons designed by <a href="https://www.flaticon.com/authors/freepik" target="_blank" rel="noopener noreferrer">Freepik / Magnific</a> from <a href="https://www.flaticon.com/" target="_blank" rel="noopener noreferrer">Flaticon</a></span></footer>
     </main>
   </>;
 }

@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { facultyHref } from "@/lib/faculty";
 import { CountMode, Filters as FilterValues, normalize, TYPE_LABELS } from "@/lib/analytics";
+const MONTHS_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 interface Props {
     filters: FilterValues;
     years: number[];
@@ -26,6 +28,7 @@ export default function Filters({ filters, years, programmes, indexes, staff, se
     <div className="filtergrid">
       <label>{t("ปีเริ่มต้น")}<select value={filters.start} onChange={e => update("start", Number(e.target.value))}>{years.map(y => <option key={y} value={y}>{formatYear(y)}</option>)}</select></label>
       <label>{t("ปีสิ้นสุด")}<select value={filters.end} onChange={e => update("end", Number(e.target.value))}>{years.map(y => <option key={y} value={y}>{formatYear(y)}</option>)}</select></label>
+      <label>{t("เดือน")}<select value={filters.month} onChange={e => update("month", e.target.value)}><option value="">{t("ทุกเดือน")}</option>{MONTHS_TH.map((month, i) => <option key={month} value={i + 1}>{language === "th" ? month : MONTHS_EN[i]}</option>)}</select></label>
       <label>{t("หลักสูตร")}<select value={filters.programme} onChange={e => update("programme", e.target.value)}><option value="">{t("ทุกหลักสูตร")}</option>{programmes.map(p => <option key={p} value={p}>{displayProgramme(p)}</option>)}</select></label>
       <label>{t("ประเภทผลงาน")}<select value={filters.type} onChange={e => update("type", e.target.value)}><option value="">{t("ทุกประเภท")}</option>{Object.entries(TYPE_LABELS).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}</select></label>
       <label>{t("ฐานข้อมูลวิชาการ")}<select value={filters.index} onChange={e => update("index", e.target.value)}><option value="">{t("ทุกฐานข้อมูลวิชาการ")}</option>{indexes.map(index => <option key={index} value={index || "__empty__"}>{index || t("ไม่ระบุ")}</option>)}</select></label>

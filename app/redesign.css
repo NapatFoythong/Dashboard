@@ -204,6 +204,10 @@ button, a, select, input { -webkit-tap-highlight-color: transparent; }
   dialog { padding: 24px 20px; }
   .faculty-preview-popup { border-radius: 15px; }
 }
+.filtergrid { grid-template-columns: 1fr 1fr .9fr 1.1fr 1.1fr 1.35fr 1fr; }
+@media (min-width: 761px) and (max-width: 1450px) { .filtergrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.staff-entry-link { color:#08737c; text-decoration:none; font-size:12px; font-weight:600; }
+.staff-entry-link:hover { text-decoration:underline; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } aside nav a, .faculty-person { transition: none; } }
 /* Research-themed details for the overview header and controls. */
 .heading { position: relative; min-height: 248px; padding: 30px 36px; border: 1px solid #174d76; border-radius: 18px; background: radial-gradient(ellipse at 90% 10%, #147b9c90 0, transparent 58%), linear-gradient(115deg, #072d54, #064477); box-shadow: 0 10px 30px #07355a0a; }
@@ -615,3 +619,4 @@ footer span { font-size: 11px; }
   .mobile-visitor .visitor-counter small { color: #5f7383; }
   .mobile-visitor .visitor-counter button { color: #31566a; background: #f0f7f9; border-color: #d4e7eb; }
 }
+@media (max-width: 760px) { .filtergrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -1,8 +1,8 @@
 import { COLORS, countWorks, unique, compareText, type Publication, type CountMode } from "./analytics.ts";
 
 export function programmeColor(programme: string) {
-  const index = ["Comp", "DBiz", "DE", "MsComp"].indexOf(programme);
-  return COLORS[index < 0 ? 4 : index];
+  const index = ["COMP", "Dbiz", "DE", "AISE"].indexOf(programme);
+  return COLORS[index < 0 ? 0 : index];
 }
 
 /** Split each counted work equally across its programmes, conserving the total. */

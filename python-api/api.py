@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 from io import BytesIO
+import json
 from math import ceil, isfinite
 import hmac
 import os
 from pathlib import Path
 from tempfile import gettempdir
+import time
 from typing import Literal
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 from urllib.request import Request as URLRequest, urlopen
 from xml.etree import ElementTree as ET
 
@@ -88,9 +91,116 @@ class PieRequest(BaseModel):
         return self
 
 
+class StaffLogin(BaseModel):
+    username: str = Field(min_length=1, max_length=120)
+    password: str = Field(min_length=1, max_length=256)
+
+
+class StaffPublication(BaseModel):
+    authors: list[str] = Field(min_length=1, max_length=30)
+    type: Literal["International Journal Articles", "International Proceedings", "National Journal Articles", "National Proceedings"]
+    detail: str = Field(min_length=5, max_length=5000)
+    year: int = Field(ge=1900, le=2200)
+    month: int = Field(ge=1, le=12)
+    index: str = Field(default="", max_length=160)
+    psu: Literal["", "Y", "N"] = ""
+
+    @model_validator(mode="after")
+    def validate_authors(self):
+        cleaned = [name.strip() for name in self.authors]
+        if any(len(name) < 2 or len(name) > 160 for name in cleaned) or len(set(cleaned)) != len(cleaned):
+            raise ValueError("Authors must be unique valid names")
+        self.authors = cleaned
+        self.detail = self.detail.strip()
+        return self
+
+
+class StaffProgrammes(BaseModel):
+    faculty: str = Field(min_length=2, max_length=160)
+    programmes: list[Literal["AISE", "DE", "COMP", "Dbiz"]] = Field(max_length=4)
+
+    @model_validator(mode="after")
+    def validate_mapping(self):
+        self.faculty = self.faculty.strip()
+        if len(set(self.programmes)) != len(self.programmes):
+            raise ValueError("Programme values must be unique")
+        return self
+
+
 app = FastAPI(title="CoC Matplotlib Charts", docs_url=None, redoc_url=None)
 API_TOKEN = os.getenv("MATPLOTLIB_API_TOKEN", "")
 CLOUDFLARE_VISITORS_API = os.getenv("CLOUDFLARE_VISITORS_API", "").strip().rstrip("/")
+STAFF_USERNAME = os.getenv("STAFF_USERNAME", "")
+STAFF_PASSWORD = os.getenv("STAFF_PASSWORD", "")
+STAFF_SESSION_SECRET = os.getenv("STAFF_SESSION_SECRET", "")
+STAFF_API_TOKEN = os.getenv("STAFF_API_TOKEN", "")
+STAFF_SESSION_COOKIE = "coc_staff_session"
+STAFF_SESSION_SECONDS = 8 * 60 * 60
+
+
+def require_same_origin(request: Request):
+    origin = request.headers.get("origin", "")
+    forwarded_host = request.headers.get("x-forwarded-host") or request.headers.get("host", "")
+    forwarded_proto = request.headers.get("x-forwarded-proto", "https")
+    if not origin or origin != f"{forwarded_proto}://{forwarded_host}".rstrip("/"):
+        raise HTTPException(status_code=403, detail="Invalid origin")
+
+
+def create_staff_session(username: str) -> str:
+    payload = base64.urlsafe_b64encode(json.dumps({"u": username, "e": int(time.time()) + STAFF_SESSION_SECONDS}, separators=(",", ":")).encode()).decode().rstrip("=")
+    signature = hmac.new(STAFF_SESSION_SECRET.encode(), payload.encode(), "sha256").hexdigest()
+    return f"{payload}.{signature}"
+
+
+def staff_session_username(request: Request) -> str | None:
+    if not STAFF_SESSION_SECRET:
+        return None
+    token = request.cookies.get(STAFF_SESSION_COOKIE, "")
+    try:
+        payload, signature = token.rsplit(".", 1)
+        expected = hmac.new(STAFF_SESSION_SECRET.encode(), payload.encode(), "sha256").hexdigest()
+        if not hmac.compare_digest(signature, expected):
+            return None
+        decoded = base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4))
+        data = json.loads(decoded)
+        if not isinstance(data.get("u"), str) or int(data.get("e", 0)) < int(time.time()):
+            return None
+        return data["u"]
+    except (ValueError, TypeError, json.JSONDecodeError):
+        return None
+
+
+def require_staff(request: Request) -> str:
+    username = staff_session_username(request)
+    if not username:
+        raise HTTPException(status_code=401, detail="Staff sign-in required")
+    return username
+
+
+async def forward_cloudflare_async(path: str, method: str = "GET", body: bytes | None = None, protected: bool = False):
+    return await asyncio.to_thread(forward_cloudflare_sync, path, method, body, protected)
+
+
+def forward_cloudflare_sync(path: str, method: str = "GET", body: bytes | None = None, protected: bool = False):
+    if not CLOUDFLARE_VISITORS_API:
+        raise HTTPException(status_code=503, detail="Cloudflare D1 API is not configured")
+    if protected and not STAFF_API_TOKEN:
+        raise HTTPException(status_code=503, detail="Staff API token is not configured")
+    api_url = f"{CLOUDFLARE_VISITORS_API}{path}"
+    parsed_api_url = urlsplit(CLOUDFLARE_VISITORS_API)
+    headers = {"Origin": f"{parsed_api_url.scheme}://{parsed_api_url.netloc}", "User-Agent": "CoC-Academic-Dashboard/1.0"}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+    if protected:
+        headers["Authorization"] = f"Bearer {STAFF_API_TOKEN}"
+    upstream_request = URLRequest(api_url, data=body, headers=headers, method=method)
+    try:
+        with urlopen(upstream_request, timeout=20) as upstream:
+            return Response(content=upstream.read(), status_code=upstream.status, media_type=upstream.headers.get("content-type", "application/json").split(";", 1)[0], headers={"Cache-Control": "no-store"})
+    except HTTPError as error:
+        return Response(content=error.read(), status_code=error.code, media_type=error.headers.get("content-type", "application/json").split(";", 1)[0], headers={"Cache-Control": "no-store"})
+    except (URLError, TimeoutError, OSError) as error:
+        raise HTTPException(status_code=503, detail="Cloudflare D1 API unavailable") from error
 
 
 def authorize(request: Request):
@@ -182,6 +292,73 @@ async def visitors(request: Request):
         media_type=content_type.split(";", 1)[0],
         headers={"Cache-Control": "no-store"},
     )
+
+
+@app.get("/api/publications")
+async def publication_overlay():
+    return await forward_cloudflare_async("/api/publications")
+
+
+@app.get("/api/staff/session")
+def staff_session(request: Request):
+    username = staff_session_username(request)
+    return JSONResponse({"authenticated": bool(username), "username": username}, headers={"Cache-Control": "no-store"})
+
+
+@app.post("/api/staff/login")
+def staff_login(payload: StaffLogin, request: Request):
+    require_same_origin(request)
+    if not STAFF_USERNAME or not STAFF_PASSWORD or not STAFF_SESSION_SECRET:
+        raise HTTPException(status_code=503, detail="Staff login is not configured")
+    if not hmac.compare_digest(payload.username.encode("utf-8"), STAFF_USERNAME.encode("utf-8")) or not hmac.compare_digest(payload.password.encode("utf-8"), STAFF_PASSWORD.encode("utf-8")):
+        raise HTTPException(status_code=401, detail="ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
+    response = JSONResponse({"authenticated": True, "username": STAFF_USERNAME}, headers={"Cache-Control": "no-store"})
+    secure = request.headers.get("x-forwarded-proto", request.url.scheme) == "https"
+    response.set_cookie(STAFF_SESSION_COOKIE, create_staff_session(STAFF_USERNAME), max_age=STAFF_SESSION_SECONDS,
+                        httponly=True, secure=secure, samesite="lax", path="/")
+    return response
+
+
+@app.post("/api/staff/logout")
+def staff_logout(request: Request):
+    require_same_origin(request)
+    response = JSONResponse({"authenticated": False}, headers={"Cache-Control": "no-store"})
+    response.delete_cookie(STAFF_SESSION_COOKIE, path="/", httponly=True, secure=request.headers.get("x-forwarded-proto", request.url.scheme) == "https", samesite="lax")
+    return response
+
+
+@app.post("/api/staff/publications")
+async def create_publication(payload: StaffPublication, request: Request):
+    require_staff(request)
+    require_same_origin(request)
+    body = json.dumps(payload.model_dump(), ensure_ascii=False).encode()
+    return await forward_cloudflare_async("/api/staff/publications", "POST", body, protected=True)
+
+
+@app.delete("/api/staff/publications/{record_id}")
+async def delete_publication(record_id: str, request: Request):
+    require_staff(request)
+    require_same_origin(request)
+    if len(record_id) > 90:
+        raise HTTPException(status_code=400, detail="Invalid publication id")
+    return await forward_cloudflare_async(f"/api/staff/publications/{quote(record_id, safe='')}", "DELETE", protected=True)
+
+
+@app.put("/api/staff/publications/{record_id}/restore")
+async def restore_publication(record_id: str, request: Request):
+    require_staff(request)
+    require_same_origin(request)
+    if len(record_id) > 90:
+        raise HTTPException(status_code=400, detail="Invalid publication id")
+    return await forward_cloudflare_async(f"/api/staff/publications/{quote(record_id, safe='')}/restore", "PUT", protected=True)
+
+
+@app.put("/api/staff/programmes")
+async def update_staff_programmes(payload: StaffProgrammes, request: Request):
+    require_staff(request)
+    require_same_origin(request)
+    body = json.dumps(payload.model_dump(), ensure_ascii=False).encode()
+    return await forward_cloudflare_async("/api/staff/programmes", "PUT", body, protected=True)
 
 
 @app.post("/api/charts/trend")

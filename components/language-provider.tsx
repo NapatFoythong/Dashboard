@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { translate, type Language } from "@/lib/i18n";
+import { programmeLabel } from "@/lib/analytics";
 
 interface LanguageContextValue {
   language: Language;
@@ -26,7 +27,7 @@ export default function LanguageProvider({ children }: { children: ReactNode }) 
   const t = useCallback((text: string | undefined, ...values: (string | number)[]) => translate(language, text, ...values), [language]);
   return <LanguageContext.Provider value={{ language, setLanguage, t,
     yearLabel: year => language === "th" ? `${year + 543} (${year})` : `${year} (BE ${year + 543})`,
-    programmeLabel: programme => programme === "DE" ? "DE / AISE" : t(programme),
+    programmeLabel: programme => t(programmeLabel(programme)),
   }}>{children}</LanguageContext.Provider>;
 }
 

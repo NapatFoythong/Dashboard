@@ -45,7 +45,7 @@ npm run charts:api
 
 เลือกธงไทยหรือ UK ที่มุมขวาบนเพื่อสลับ UI ภาษาไทย/อังกฤษ ระบบจำภาษาด้วย localStorage และใช้ร่วมกันระหว่างแดชบอร์ดกับหน้าอาจารย์ ชื่อและข้อความผลงานจาก CSV ไม่ถูกแปลหรือเปลี่ยนแปลง
 
-ส่วนรายการผลงานมีตัวเลือกเรียงปีล่าสุด/เก่าสุด ชื่อผลงาน A–Z/Z–A และชื่ออาจารย์ A–Z/Z–A รวมถึงตัวเลือกอาจารย์หลายคน ซึ่งใช้สถานะเดียวกับตัวกรองภาพรวม การส่งออก CSV ใช้ผลลัพธ์หลังกรองและเรียงลำดับ
+ส่วนรายการผลงานมีตัวเลือกกรองเดือนและเรียงตามเดือน ปี ชื่อผลงาน หรือชื่ออาจารย์ รวมถึงตัวเลือกอาจารย์หลายคน ซึ่งใช้สถานะเดียวกับตัวกรองภาพรวม การส่งออก CSV ใช้ผลลัพธ์หลังกรองและเรียงลำดับ
 
 ## ตรวจและ build
 
@@ -90,6 +90,10 @@ The lower sidebar shows a shared unique-browser count, starting when this featur
 Production uses the Sites D1 binding DB and the schema migration in drizzle/. Local dev and preview use .runtime/visitors.sqlite, separate from production. Keep this file to retain local counts; it is ignored by Git and packaging. No IP addresses or names are stored. API responses are never cached, and counter failure shows an unavailable state with retry rather than a fabricated number.
 
 The Worker embeds compressed Next.js output; scripts/build-worker.mjs enforces its module size budget. npm run build creates both the Next.js output and the Worker. The local npm run dev server and npm start both expose /api/visitors. Database migrations must be included when deploying to a different host.
+
+## Staff publication management
+
+The public dashboard is read-only. Authorized staff can sign in at `/staff/login/` to add publications, hide or restore imported rows, delete staff-added rows, and assign faculty to AISE, DE, COMP, or Dbiz. New data and overrides are stored in Cloudflare D1; the existing DE assignments remain DE, and `MsComp` is excluded. Apply `drizzle/0001_staff_content.sql`, configure the Worker and Vercel secrets, and deploy using [the staff setup guide](docs/STAFF-ADMIN-SETUP.md). Staff changes appear on the public dashboard without changing the imported JSON.
 
 
 ## Research topic discovery
