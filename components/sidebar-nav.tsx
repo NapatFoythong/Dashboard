@@ -21,5 +21,6 @@ export default function SidebarNav() {
     }, []);
     return <nav aria-label={t("เมนูหลัก")}>
     {items.map(item => <a key={item.id} href={`#${item.id}`} className={active === item.id ? "active" : undefined} aria-current={active === item.id ? "location" : undefined} onClick={() => setActive(item.id)}><span className="sidebar-icon" aria-hidden="true" style={{ maskImage: `url(${item.icon})`, WebkitMaskImage: `url(${item.icon})` }} />{t(item.label)}</a>)}
+    <a className="staff-nav-link" href="/staff/login/"><svg className="staff-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5M10 16l4-4-4-4M14 12H4"/></svg>{t("เข้าสู่ระบบเจ้าหน้าที่")}</a>
   </nav>;
 }
