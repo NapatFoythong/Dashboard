@@ -226,7 +226,12 @@ def trend_chart(payload: TrendRequest, request: Request):
     step = max(1, ceil(maximum / 4))
     ax.set_ylim(0, max(step * 4, 1))
     ax.set_yticks(range(0, step * 4 + 1, step))
-    ax.set_xticks(range(len(payload.years)), payload.year_labels)
+    year_count = len(payload.years)
+    tick_interval = max(1, ceil((year_count - 1) / 9)) if year_count > 10 else 1
+    tick_indices = list(range(0, year_count, tick_interval))
+    if tick_indices and tick_indices[-1] != year_count - 1:
+        tick_indices.append(year_count - 1)
+    ax.set_xticks(tick_indices, [payload.year_labels[index] for index in tick_indices])
     ax.grid(axis="y", color="#e7eef2", linewidth=0.8, zorder=0)
     ax.tick_params(axis="both", colors="#668095", labelsize=9, length=0, pad=8)
     for spine in ax.spines.values():
