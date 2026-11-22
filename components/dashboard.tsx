@@ -55,6 +55,19 @@ export default function Dashboard({ data }: {
     const indexes = useMemo(() => unique(records.map(row => row.index)).sort(), [records]);
     const years = useMemo(() => { const values = records.map(row => row.year); const first = Math.min(...values); return Array.from({ length: Math.max(...values) - first + 1 }, (_, i) => first + i); }, [records]);
     const [filters, setFilters] = useState<FilterValues>({ ...DEFAULT_FILTERS });
+    const [yearRangeCustomized, setYearRangeCustomized] = useState(false);
+    const addedYearBounds = useMemo(() => {
+      const addedYears = records.filter(row => row.recordKey.startsWith("added-")).map(row => row.year);
+      return addedYears.length ? { start: Math.min(...addedYears), end: Math.max(...addedYears) } : null;
+    }, [records]);
+    useEffect(() => {
+      if (yearRangeCustomized || !addedYearBounds) return;
+      setFilters(current => ({
+        ...current,
+        start: Math.min(current.start, addedYearBounds.start),
+        end: Math.max(current.end, addedYearBounds.end),
+      }));
+    }, [addedYearBounds, yearRangeCustomized]);
     const [selected, setSelected] = useState(() => new Set(roster));
     useEffect(() => {
       const addedAuthors = records.filter(row => row.recordKey.startsWith("added-")).map(row => row.name);
@@ -78,7 +91,15 @@ export default function Dashboard({ data }: {
         { title: t("ผลงานในฐาน Scopus"), value: scopus, note: t("{0}% ของผลงานที่แสดง", works.length ? Math.round(scopus / works.length * 100) : 0) },
         { title: t("ประเภทผลงาน"), value: unique(raw.map(row => row.type)).length, note: t("วารสารและการประชุมวิชาการ") },
     ];
-    function reset() { setFilters({ ...DEFAULT_FILTERS }); setSelected(new Set(roster)); setGroup("total"); setQuery(""); setSort("newest"); setTopic(""); setChartFilter({}); }
+    function reset() {
+      setYearRangeCustomized(false);
+      setFilters({
+        ...DEFAULT_FILTERS,
+        start: Math.min(DEFAULT_FILTERS.start, addedYearBounds?.start ?? DEFAULT_FILTERS.start),
+        end: Math.max(DEFAULT_FILTERS.end, addedYearBounds?.end ?? DEFAULT_FILTERS.end),
+      });
+      setSelected(new Set(roster)); setGroup("total"); setQuery(""); setSort("newest"); setTopic(""); setChartFilter({});
+    }
     return <>
     <aside><CocBrand /><div className="navlabel">RESEARCH WORKSPACE</div><SidebarNav /><div className="asidefoot"><span className="dot"/>{t("ข้อมูลจากไฟล์ที่นำเข้า")}<small>{t("Publications CV · ตุลาคม 2025")}</small><VisitorCounter /></div></aside>
     <main id="overview"><header><div className="desktop-breadcrumb">{t("วิทยาลัยการคอมพิวเตอร์ ")}<span>/</span>{t(" ภาพรวมผลงานวิจัย")}</div><CocBrand className="mobile-brand"/><div className="header-actions"><LanguageSwitcher /></div></header>
@@ -100,7 +121,7 @@ export default function Dashboard({ data }: {
         <circle cx="274" cy="102" r="5" fill="#c63141"/>
         <circle cx="143" cy="28" r="4" fill="#84bccd"/>
       </svg></section>
-      <Filters filters={filters} years={years} programmes={programmes} indexes={indexes} staff={staff} selected={selected} onChange={next => { setFilters(next); setChartFilter({}); }} onSelect={selectFaculty} onReset={reset}/>
+      <Filters filters={filters} years={years} programmes={programmes} indexes={indexes} staff={staff} selected={selected} onChange={next => { if (next.start !== filters.start || next.end !== filters.end) setYearRangeCustomized(true); setFilters(next); setChartFilter({}); }} onSelect={selectFaculty} onReset={reset}/>
       <DataGuide /><div className="stats" aria-live="polite">{statistics.map(stat => <div className="stat" key={stat.title}><label>{stat.title}</label><strong>{stat.value.toLocaleString("en-US")}</strong><small>{stat.note}</small></div>)}</div>
       <p className="chart-hint">{t("กดแท่งกราฟหรือส่วนของกราฟวงกลมเพื่อกรองรายการผลงานด้านล่าง")}</p>
       <div className="charts"><section className="card trend"><div className="cardhead"><div><h2>{t("แนวโน้มผลงานทางวิชาการ")}</h2><p>{t("จำนวนผลงานในแต่ละปีตามตัวกรองที่เลือก")}</p></div><select value={group} onChange={e => setGroup(e.target.value as GroupMode)} aria-label={t("แยกกราฟตาม")}><option value="total">{t("ผลงานรวม")}</option><option value="type">{t("แยกตามประเภท")}</option><option value="programme">{t("แยกตามหลักสูตร")}</option></select></div><TrendChart records={raw} start={filters.start} end={filters.end} mode={filters.count} group={group} onSelect={(year, type, programme) => selectChart(year, type, programme)}/></section>
