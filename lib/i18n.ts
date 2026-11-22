@@ -248,7 +248,7 @@ export const EN_MESSAGES: Record<string, string> = {
   "หน้าถัดไป": "Next page",
   "หน้า {0}": "Page {0}",
   "หลักสูตรของอาจารย์": "Faculty programmes",
-  "กำหนดสังกัดที่ใช้จัดกลุ่มในกราฟและตัวกรอง · MsComp จะไม่แสดง": "Set affiliations used by filters and charts. MsComp is excluded.",
+  "กำหนดสังกัดที่ใช้จัดกลุ่มในกราฟและตัวกรอง": "Set affiliations used by filters and charts.",
   "อาจารย์": "Faculty",
   "บันทึกหลักสูตร": "Save programmes",
   "ข้อมูลต้นฉบับยังคงแยกจากรายการที่ staff เพิ่ม": "Source data remains separate from staff-added records.",

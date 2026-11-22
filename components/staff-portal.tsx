@@ -247,7 +247,7 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
     </section>
 
     <section className="staff-card">
-      <div className="staff-card-head"><div><h2>{t("หลักสูตรของอาจารย์")}</h2><p>{t("กำหนดสังกัดที่ใช้จัดกลุ่มในกราฟและตัวกรอง · MsComp จะไม่แสดง")}</p></div><span className="staff-step">02</span></div>
+      <div className="staff-card-head"><div><h2>{t("หลักสูตรของอาจารย์")}</h2><p>{t("กำหนดสังกัดที่ใช้จัดกลุ่มในกราฟและตัวกรอง")}</p></div><span className="staff-step">02</span></div>
       <div className="staff-programme-editor"><label>{t("อาจารย์")}<select value={selectedFaculty} onChange={event => setSelectedFaculty(event.target.value)}>{faculty.map(name => <option value={name} key={name}>{name}</option>)}</select></label>
         <div className="staff-programme-options">{PROGRAMMES.map(programme => <label key={programme}><input type="checkbox" checked={programmeSelection.includes(programme)} onChange={event => setProgrammeSelection(current => event.target.checked ? [...current, programme] : current.filter(value => value !== programme))}/>{programme}</label>)}</div>
         <button className="staff-primary" disabled={busy} onClick={saveProgrammes}>{t("บันทึกหลักสูตร")}</button>
