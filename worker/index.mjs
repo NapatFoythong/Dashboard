@@ -45,9 +45,10 @@ async function handleStaff(request, env, url) {
     const programmeAssignments = body?.programmes ?? {};
     const authorNames = new Set(Array.isArray(body?.authors) ? body.authors.map(name => typeof name === 'string' ? name.trim() : '') : []);
     const validProgrammeAssignments = programmeAssignments && typeof programmeAssignments === 'object' && !Array.isArray(programmeAssignments)
+      && Object.keys(programmeAssignments).length === authorNames.size
       && Object.entries(programmeAssignments).length <= 30
       && Object.entries(programmeAssignments).every(([name, programmes]) => typeof name === 'string' && authorNames.has(name.trim())
-        && Array.isArray(programmes) && programmes.length <= PROGRAMMES.size
+        && Array.isArray(programmes) && programmes.length > 0 && programmes.length <= PROGRAMMES.size
         && programmes.every(programme => PROGRAMMES.has(programme)) && new Set(programmes).size === programmes.length);
     if (!body || !Array.isArray(body.authors) || body.authors.length < 1 || body.authors.length > 30
       || body.authors.some(name => typeof name !== 'string' || name.trim().length < 2 || name.length > 160)

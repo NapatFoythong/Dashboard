@@ -112,8 +112,9 @@ class StaffPublication(BaseModel):
         if any(len(name) < 2 or len(name) > 160 for name in cleaned) or len(set(cleaned)) != len(cleaned):
             raise ValueError("Authors must be unique valid names")
         programme_assignments = {faculty.strip(): values for faculty, values in self.programmes.items()}
-        if any(faculty not in cleaned or len(set(values)) != len(values) for faculty, values in programme_assignments.items()):
-            raise ValueError("Programme assignments must belong to selected authors and be unique")
+        if len(programme_assignments) != len(self.programmes) or set(programme_assignments) != set(cleaned) \
+                or any(not values or len(set(values)) != len(values) for values in programme_assignments.values()):
+            raise ValueError("Select at least one unique programme for every selected author")
         self.authors = cleaned
         self.programmes = programme_assignments
         self.detail = self.detail.strip()

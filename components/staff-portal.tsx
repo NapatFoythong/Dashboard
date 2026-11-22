@@ -153,6 +153,7 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
     const enteredYear = Number(yearInput);
     const yearCE = enteredYear >= 2400 ? enteredYear - 543 : enteredYear;
     if (!authors.length) { setError(t("กรุณาเลือกอาจารย์อย่างน้อย 1 คน")); setBusy(false); return; }
+    if (authors.some(name => programmesForAuthor(name).length === 0)) { setError(t("กรุณาเลือกอย่างน้อยหนึ่งหลักสูตรให้ผู้เขียนทุกคน")); setBusy(false); return; }
     if (!Number.isInteger(enteredYear) || yearCE < 1900 || yearCE > 2200) { setError(t("กรุณาระบุปี ค.ศ. หรือ พ.ศ. ให้ถูกต้อง")); setBusy(false); return; }
     if (detail.trim().length < 5) { setError(t("กรุณากรอกรายละเอียดผลงานอย่างน้อย 5 ตัวอักษร")); setBusy(false); return; }
     try {
@@ -242,9 +243,8 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
           </div>
         </section>
 
-        <details className="staff-optional-fields staff-author-programme-fields">
-          <summary>{t("หลักสูตรของผู้เขียน (ไม่จำเป็น)")}</summary>
-          <p className="staff-help-text">{t("เลือกหลักสูตรให้ผู้เขียนแต่ละคน ระบบจะบันทึกพร้อมผลงาน")}</p>
+        <section className="staff-entry-section staff-author-programme-fields" aria-labelledby="staff-programme-heading">
+          <div className="staff-entry-heading"><span className="staff-entry-number">2</span><div><h3 id="staff-programme-heading">{t("หลักสูตรของผู้เขียน")} <span className="staff-required">{t("จำเป็น")}</span></h3><p>{t("เลือกอย่างน้อยหนึ่งหลักสูตรสำหรับผู้เขียนทุกคน ระบบจะบันทึกพร้อมผลงาน")}</p></div></div>
           {!authors.length ? <p className="staff-programme-empty">{t("เลือกผู้เขียนก่อน เพื่อกำหนดหลักสูตร")}</p> : <div className="staff-author-programme-list">
             {authors.map(name => <fieldset className="staff-author-programme" key={name}>
               <legend>{name}</legend>
@@ -255,10 +255,10 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
               }}/>{programme}</label>)}</div>
             </fieldset>)}
           </div>}
-        </details>
+        </section>
 
         <section className="staff-entry-section" aria-labelledby="staff-publication-heading">
-          <div className="staff-entry-heading"><span className="staff-entry-number">2</span><div><h3 id="staff-publication-heading">{t("กรอกข้อมูลผลงาน")}</h3><p>{t("ใส่ข้อมูลอ้างอิงที่มี ใช้ DOI หรือ URL ได้ถ้ามี")}</p></div></div>
+          <div className="staff-entry-heading"><span className="staff-entry-number">3</span><div><h3 id="staff-publication-heading">{t("กรอกข้อมูลผลงาน")}</h3><p>{t("ใส่ข้อมูลอ้างอิงที่มี ใช้ DOI หรือ URL ได้ถ้ามี")}</p></div></div>
           <div className="staff-core-fields">
             <label className="staff-detail-field">{t("ชื่อผลงานและรายละเอียดอ้างอิง")}<textarea value={detail} onChange={event => setDetail(event.target.value)} minLength={5} maxLength={5000} rows={5} required placeholder={t("ชื่อบทความ วารสาร/การประชุม เล่ม ฉบับ หน้า หรือ DOI")}/><small className="staff-help-text">{t("วาง DOI หรือ URL ไว้ในรายละเอียดได้ ระบบจะแสดงเป็นลิงก์ผลงานบนเว็บ")}</small></label>
             <div className="staff-core-metadata">
