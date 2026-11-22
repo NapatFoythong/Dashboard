@@ -72,6 +72,16 @@
 .staff-record.is-hidden { background:#fffafa; opacity:.75; }
 .staff-record.is-hidden button { color:#08737c; border-color:#c9e7eb; }
 .staff-list-hint, .staff-empty { padding:18px; text-align:center; color:#718898; font-size:12px; }
+.staff-pagination { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px 2px 0; border-top:1px solid #edf1f4; }
+.staff-page-range { color:#718898; font-size:11px; font-variant-numeric:tabular-nums; }
+.staff-page-controls { display:flex; align-items:center; gap:5px; }
+.staff-page-controls button { display:grid; place-items:center; min-width:34px; height:34px; padding:0 8px; border:1px solid #dce7ed; border-radius:8px; color:#45677d; background:#fff; font:inherit; font-size:12px; cursor:pointer; }
+.staff-page-controls button:hover:not(:disabled):not(.is-active) { border-color:#93cdd2; color:#08737c; background:#f4fbfc; }
+.staff-page-controls button.is-active { border-color:#003c71; color:#fff; background:#003c71; font-weight:700; }
+.staff-page-controls button:disabled { opacity:.42; cursor:not-allowed; }
+.staff-page-controls .staff-page-arrow { font-size:20px; line-height:1; }
+.staff-page-ellipsis { width:18px; color:#8194a2; text-align:center; }
+.staff-page-controls button:focus-visible { outline:2px solid #39a9b3; outline-offset:2px; }
 .staff-programme-editor { display:flex; align-items:flex-end; gap:24px; }
 .staff-programme-editor > label { flex:1; max-width:420px; }
 .staff-programme-options { display:flex; flex-wrap:wrap; gap:9px; }
@@ -92,4 +102,4 @@
 .staff-denied h1 { margin:0; color:#003c71; }
 .staff-denied .staff-primary { color:#fff; }
 @media(max-width:850px) { .staff-core-fields { grid-template-columns:1fr; } .staff-detail-field textarea { min-height:140px; } .staff-programme-editor { align-items:stretch; flex-direction:column; gap:15px; } }
-@media(max-width:600px) { .staff-page { padding:0 14px 30px; } .staff-topbar { min-height:60px; font-size:11px; } .staff-heading { align-items:flex-start; flex-direction:column; padding:24px 0 18px; } .staff-heading h1 { font-size:25px; } .staff-card { padding:17px; border-radius:13px; } .staff-author-toolbar { align-items:stretch; flex-direction:column; } .staff-author-list { grid-template-columns:1fr; max-height:250px; } .staff-entry-heading { align-items:flex-start; } .staff-selection-count { margin-left:auto; } .staff-optional-grid { grid-template-columns:1fr; } .staff-form-actions { flex-direction:column-reverse; } .staff-form-actions > button { width:100%; } .staff-list-tools { align-items:stretch; flex-wrap:wrap; gap:10px; } .staff-list-tools > input { flex-basis:100%; max-width:none; } .staff-list-tools > span { margin-left:auto; } .staff-record { grid-template-columns:1fr auto; gap:7px 12px; align-items:start; } .staff-record-date { grid-column:1 / -1; } .staff-record-content { grid-column:1; } .staff-record > button { grid-column:2; grid-row:2; } .staff-login-card { padding:25px 20px; } .staff-footer { flex-direction:column; } }
+@media(max-width:600px) { .staff-page { padding:0 14px 30px; } .staff-topbar { min-height:60px; font-size:11px; } .staff-heading { align-items:flex-start; flex-direction:column; padding:24px 0 18px; } .staff-heading h1 { font-size:25px; } .staff-card { padding:17px; border-radius:13px; } .staff-author-toolbar { align-items:stretch; flex-direction:column; } .staff-author-list { grid-template-columns:1fr; max-height:250px; } .staff-entry-heading { align-items:flex-start; } .staff-selection-count { margin-left:auto; } .staff-optional-grid { grid-template-columns:1fr; } .staff-form-actions { flex-direction:column-reverse; } .staff-form-actions > button { width:100%; } .staff-list-tools { align-items:stretch; flex-wrap:wrap; gap:10px; } .staff-list-tools > input { flex-basis:100%; max-width:none; } .staff-list-tools > span { margin-left:auto; } .staff-record { grid-template-columns:1fr auto; gap:7px 12px; align-items:start; } .staff-record-date { grid-column:1 / -1; } .staff-record-content { grid-column:1; } .staff-record > button { grid-column:2; grid-row:2; } .staff-pagination { align-items:flex-start; flex-direction:column; } .staff-page-controls { max-width:100%; flex-wrap:wrap; } .staff-page-controls button { min-width:32px; height:32px; } .staff-login-card { padding:25px 20px; } .staff-footer { flex-direction:column; } }
