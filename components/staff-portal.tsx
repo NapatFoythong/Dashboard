@@ -48,7 +48,7 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
   const [authors, setAuthors] = useState<string[]>([]);
   const [type, setType] = useState(TYPES[0]);
   const [detail, setDetail] = useState("");
-  const [year, setYear] = useState(2025);
+  const [yearInput, setYearInput] = useState(String(new Date().getFullYear()));
   const [month, setMonth] = useState(10);
   const [index, setIndex] = useState("");
   const [psu, setPsu] = useState("");
@@ -58,7 +58,7 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
   ]).sort(compareText), []);
   const [selectedFaculty, setSelectedFaculty] = useState(faculty[0] ?? "");
   const [programmeSelection, setProgrammeSelection] = useState<Programme[]>([]);
-  useEffect(() => { setYear(new Date().getFullYear()); setMonth(new Date().getMonth() + 1); }, []);
+  useEffect(() => { setMonth(new Date().getMonth() + 1); }, []);
 
   async function refreshOverlay() {
     const value = await jsonRequest("/api/publications");
@@ -92,6 +92,8 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
     return [...base, ...added].filter(row => showHidden || !row.hidden).sort((a, b) => b.year - a.year || b.month - a.month || compareText(a.name, b.name));
   }, [overlay, showHidden]);
   const visibleRecords = records.filter(row => !search.trim() || `${row.name} ${row.detail} ${row.index} ${row.year} ${row.month} ${MONTHS_TH[row.month - 1] ?? ""} ${MONTHS_EN[row.month - 1] ?? ""}`.toLowerCase().includes(search.trim().toLowerCase())).slice(0, 100);
+  const matchingFaculty = faculty.filter(name => name.toLowerCase().includes(authorSearch.trim().toLowerCase()));
+  const allMatchingFacultySelected = matchingFaculty.length > 0 && matchingFaculty.every(name => authors.includes(name));
 
   useEffect(() => {
     const defaultProgrammes = data.staff.find(person => normalizeFacultyName(person.name) === selectedFaculty)?.programmes ?? [];
@@ -116,11 +118,36 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
 
   async function addPublication(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError(""); setSuccess("");
+    const enteredYear = Number(yearInput);
+    const yearCE = enteredYear >= 2400 ? enteredYear - 543 : enteredYear;
+    if (!authors.length) { setError(t("กรุณาเลือกอาจารย์อย่างน้อย 1 คน")); setBusy(false); return; }
+    if (!Number.isInteger(enteredYear) || yearCE < 1900 || yearCE > 2200) { setError(t("กรุณาระบุปี ค.ศ. หรือ พ.ศ. ให้ถูกต้อง")); setBusy(false); return; }
+    if (detail.trim().length < 5) { setError(t("กรุณากรอกรายละเอียดผลงานอย่างน้อย 5 ตัวอักษร")); setBusy(false); return; }
     try {
-      const result = await jsonRequest("/api/staff/publications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ authors, type, detail, year, month, index, psu }) });
-      await refreshOverlay(); setDetail(""); setAuthors([]); setSuccess(`เพิ่มผลงานสำเร็จ (${result.ids?.length ?? authors.length} รายการผู้เขียน)`);
+      const result = await jsonRequest("/api/staff/publications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ authors, type, detail: detail.trim(), year: yearCE, month, index: index.trim(), psu }) });
+      await refreshOverlay(); setDetail(""); setAuthors([]); setAuthorSearch(""); setSuccess(t("เพิ่มผลงานสำเร็จ {0} รายการ", result.ids?.length ?? authors.length));
     } catch (cause) { setError(cause instanceof Error ? cause.message : "เพิ่มผลงานไม่สำเร็จ"); }
     finally { setBusy(false); }
+  }
+
+  function clearPublicationForm() {
+    setAuthors([]);
+    setAuthorSearch("");
+    setType(TYPES[0]);
+    setDetail("");
+    setYearInput(String(new Date().getFullYear()));
+    setMonth(new Date().getMonth() + 1);
+    setIndex("");
+    setPsu("");
+    setError("");
+    setSuccess("");
+  }
+
+  function toggleMatchingFaculty() {
+    const matching = new Set(matchingFaculty);
+    setAuthors(current => allMatchingFacultySelected
+      ? current.filter(name => !matching.has(name))
+      : unique([...current, ...matchingFaculty]));
   }
 
   async function removeRecord(record: AdminRecord) {
@@ -168,21 +195,40 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
     <header className="staff-topbar"><div><a href="/">← {t("กลับหน้าเว็บสาธารณะ")}</a><span className="staff-divider">/</span><b>{t("ระบบจัดการสำหรับเจ้าหน้าที่")}</b></div><button onClick={logout} disabled={busy}>{t("ออกจากระบบ")}</button></header>
     <section className="staff-heading"><div><p className="staff-eyebrow">STAFF WORKSPACE</p><h1>{t("จัดการผลงานทางวิชาการ")}</h1><p>{t("ข้อมูลที่บันทึกจะจัดเก็บใน Cloudflare D1 และแสดงบนหน้าเว็บสาธารณะโดยไม่ต้องแก้โค้ด")}</p></div><span className="staff-count">{overlay.added.length} {t("รายการที่ staff เพิ่ม")}</span></section>
     {(error || success) && <div className={error ? "staff-error staff-alert" : "staff-success staff-alert"} role="status">{error || success}</div>}
-    <section className="staff-card">
-      <div className="staff-card-head"><div><h2>{t("เพิ่มผลงานใหม่")}</h2><p>{t("เลือกผู้เขียนได้หลายคน ระบบจะบันทึกหนึ่งรายการต่อผู้เขียน")}</p></div><span className="staff-step">01</span></div>
-      <form className="staff-form-grid" onSubmit={addPublication}>
-        <div className="staff-authors-field"><span className="staff-field-title">{t("ผู้เขียน")}</span>
-          <input value={authorSearch} onChange={event => setAuthorSearch(event.target.value)} placeholder={t("ค้นหาชื่ออาจารย์…")}/>
-          <div className="staff-author-list">{faculty.filter(name => name.toLowerCase().includes(authorSearch.trim().toLowerCase())).map(name => <label key={name} className="staff-author-choice"><input type="checkbox" checked={authors.includes(name)} onChange={event => setAuthors(current => event.target.checked ? [...current, name] : current.filter(item => item !== name))}/><span>{name}</span></label>)}</div>
-          <small>{t("เลือกแล้ว")} {authors.length} {t("คน")}</small>
-        </div>
-        <label>{t("ประเภทผลงาน")}<select value={type} onChange={event => setType(event.target.value)}>{TYPES.map(value => <option key={value} value={value}>{t(TYPE_LABELS[value])}</option>)}</select></label>
-        <label>{t("ปี ค.ศ.")}<input type="number" min={1900} max={2200} value={year} onChange={event => setYear(Number(event.target.value))} required/></label>
-        <label>{t("เดือน")}<select value={month} onChange={event => setMonth(Number(event.target.value))}>{MONTHS_TH.map((label, i) => <option key={label} value={i + 1}>{language === "th" ? label : MONTHS_EN[i]}</option>)}</select></label>
-        <label>{t("ฐานข้อมูลวิชาการ")}<input value={index} onChange={event => setIndex(event.target.value)} maxLength={160} placeholder="Scopus, TCI…"/></label>
-        <label>{t("สังกัด PSU ตามข้อมูลต้นฉบับ")}<select value={psu} onChange={event => setPsu(event.target.value)}><option value="">{t("ไม่ระบุ")}</option><option value="Y">Y</option><option value="N">N</option></select></label>
-        <label className="staff-detail-field">{t("รายละเอียดผลงาน")}<textarea value={detail} onChange={event => setDetail(event.target.value)} minLength={5} maxLength={5000} rows={4} required placeholder={t("ชื่อบทความ วารสาร/การประชุม เล่ม ฉบับ หน้า หรือ DOI")}/></label>
-        <div className="staff-form-actions"><button className="staff-primary" disabled={busy || !authors.length}>{busy ? t("กำลังบันทึก…") : t("บันทึกผลงาน")}</button></div>
+    <section className="staff-card staff-add-publication">
+      <div className="staff-card-head"><div><h2>{t("เพิ่มผลงานใหม่")}</h2><p>{t("กรอกข้อมูลหลัก เลือกผู้เขียน ระบุรายละเอียดผลงาน แล้วบันทึก")}</p></div><span className="staff-step">01</span></div>
+      <form className="staff-publication-form" onSubmit={addPublication}>
+        <section className="staff-entry-section" aria-labelledby="staff-author-heading">
+          <div className="staff-entry-heading"><span className="staff-entry-number">1</span><div><h3 id="staff-author-heading">{t("เลือกผู้เขียน")}</h3><p>{t("ผลงานหนึ่งชิ้นจะถูกเพิ่มให้ผู้เขียนที่เลือกแต่ละคน")}</p></div><span className="staff-selection-count">{authors.length} {t("คนที่เลือก")}</span></div>
+          <div className="staff-author-picker">
+            <div className="staff-author-toolbar"><input type="search" value={authorSearch} onChange={event => setAuthorSearch(event.target.value)} aria-label={t("ค้นหาชื่ออาจารย์…")} placeholder={t("ค้นหาชื่ออาจารย์…")}/><button type="button" className="staff-text-button" onClick={toggleMatchingFaculty} disabled={!matchingFaculty.length}>{allMatchingFacultySelected ? t("ยกเลิกเลือกผลลัพธ์") : t("เลือกผลลัพธ์ทั้งหมด")}</button></div>
+            {authors.length > 0 && <div className="staff-selected-authors" aria-label={t("ผู้เขียนที่เลือก")}>{authors.map(name => <span className="staff-author-chip" key={name}>{name}<button type="button" aria-label={`${t("นำออก")} ${name}`} onClick={() => setAuthors(current => current.filter(item => item !== name))}>×</button></span>)}</div>}
+            <div className="staff-author-list">{matchingFaculty.map(name => <label key={name} className={`staff-author-choice${authors.includes(name) ? " is-selected" : ""}`}><input type="checkbox" checked={authors.includes(name)} onChange={event => setAuthors(current => event.target.checked ? unique([...current, name]) : current.filter(item => item !== name))}/><span>{name}</span></label>)}{!matchingFaculty.length && <p className="staff-author-empty">{t("ไม่พบชื่ออาจารย์")}</p>}</div>
+            <small className="staff-help-text">{t("เลือกผู้เขียนตามที่ระบุในผลงาน หากเลือกหลายคนระบบจะบันทึกรายการแยกตามผู้เขียน")}</small>
+          </div>
+        </section>
+
+        <section className="staff-entry-section" aria-labelledby="staff-publication-heading">
+          <div className="staff-entry-heading"><span className="staff-entry-number">2</span><div><h3 id="staff-publication-heading">{t("กรอกข้อมูลผลงาน")}</h3><p>{t("ใส่ข้อมูลอ้างอิงที่มี ใช้ DOI หรือ URL ได้ถ้ามี")}</p></div></div>
+          <div className="staff-core-fields">
+            <label className="staff-detail-field">{t("ชื่อผลงานและรายละเอียดอ้างอิง")}<textarea value={detail} onChange={event => setDetail(event.target.value)} minLength={5} maxLength={5000} rows={5} required placeholder={t("ชื่อบทความ วารสาร/การประชุม เล่ม ฉบับ หน้า หรือ DOI")}/><small className="staff-help-text">{t("วาง DOI หรือ URL ไว้ในรายละเอียดได้ ระบบจะแสดงเป็นลิงก์ผลงานบนเว็บ")}</small></label>
+            <div className="staff-core-metadata">
+              <label>{t("ประเภทผลงาน")}<select value={type} onChange={event => setType(event.target.value)} required>{TYPES.map(value => <option key={value} value={value}>{t(TYPE_LABELS[value])}</option>)}</select></label>
+              <label>{t("ปี ค.ศ. หรือ พ.ศ.")}<input type="number" min={1900} max={2743} value={yearInput} onChange={event => setYearInput(event.target.value)} required/><small className="staff-help-text">{t("กรอกได้ทั้งปี ค.ศ. และ พ.ศ. เช่น 2024 หรือ 2567")}</small></label>
+              <label>{t("เดือน")}<select value={month} onChange={event => setMonth(Number(event.target.value))} required>{MONTHS_TH.map((label, i) => <option key={label} value={i + 1}>{language === "th" ? label : MONTHS_EN[i]}</option>)}</select></label>
+            </div>
+          </div>
+        </section>
+
+        <details className="staff-optional-fields">
+          <summary>{t("ข้อมูลเพิ่มเติม (ไม่จำเป็น)")}</summary>
+          <div className="staff-optional-grid">
+            <label>{t("ฐานข้อมูลที่จัดทำดัชนี")}<input value={index} onChange={event => setIndex(event.target.value)} maxLength={160} list="staff-index-options" placeholder="Scopus, Web of Science, TCI…"/><datalist id="staff-index-options"><option value="Scopus"/><option value="Web of Science"/><option value="SCIE (Web of Science)"/><option value="SSCI (Web of Science)"/><option value="TCI"/><option value="Others"/></datalist><small className="staff-help-text">{t("ระบุฐานที่ค้นพบผลงานนี้ ไม่ใช่ประเภทผลงาน")}</small></label>
+            <label>{t("สังกัด PSU ในผลงาน")}<select value={psu} onChange={event => setPsu(event.target.value)}><option value="">{t("ไม่ระบุ")}</option><option value="Y">Y</option><option value="N">N</option></select><small className="staff-help-text">{t("เลือก Y หรือ N เมื่อทราบข้อมูลสังกัด")}</small></label>
+          </div>
+        </details>
+
+        <div className="staff-form-actions"><button type="button" className="staff-secondary" onClick={clearPublicationForm} disabled={busy}>{t("ล้างแบบฟอร์ม")}</button><button className="staff-primary" disabled={busy}>{busy ? t("กำลังบันทึก…") : t("เพิ่มผลงาน")}</button></div>
       </form>
     </section>
 
