@@ -87,6 +87,8 @@ export const EN_MESSAGES: Record<string, string> = {
   "ดูผลงาน ↗": "View publications ↗",
   "ดูผลงานของ {0}": "View publications by {0}",
   "ตัวกรองข้อมูล": "Filters",
+  "ตัวกรองปีของรายการนี้แยกจากช่วงปีกราฟ": "This publication list has its own year range, separate from the charts.",
+  "ช่วงปีของรายการผลงาน": "Publication list year range",
   "ถัดไป →": "Next →",
   "ทุกคน": "All faculty",
   "ทุกฐานข้อมูลวิชาการ": "All academic databases",

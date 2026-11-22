@@ -403,6 +403,10 @@ button, a, select, input { -webkit-tap-highlight-color: transparent; }
 }
 .publication-toolbar .sort-control { margin-left: 0; }
 .publication-toolbar label select { margin-top: 7px; min-height: 42px; width: 100%; font-size: 11px; border-radius: 9px; }
+.publication-year-range { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 8px; min-width: 220px; }
+.publication-year-range label { display: block; min-width: 0; color: #57758d; font-size: 10px; }
+.publication-year-range select { display: block; width: 100%; margin-top: 7px; min-height: 42px; border-radius: 9px; font-size: 11px; }
+.publication-year-range > span { padding-bottom: 12px; color: #8297a8; }
 .publication-toolbar .table-faculty-picker { flex: 1 1 180px; }
 .publication-toolbar .table-faculty-picker summary {
   display: flex;
@@ -486,6 +490,7 @@ button, a, select, input { -webkit-tap-highlight-color: transparent; }
   .charts > .card { padding: 20px 17px; }
   .publications > .publication-toolbar { grid-template-columns: minmax(0, 1fr); margin: 18px 18px 0; padding: 14px; gap: 13px; }
   .publication-toolbar .type-control, .publication-toolbar .topic-control, .publication-toolbar .sort-control { flex-basis: 100%; }
+  .publication-year-range { width: 100%; min-width: 0; }
   .publications > .tablewrap { margin: 0 18px; }
   .publications > .pagination { padding: 16px 18px; flex-wrap: wrap; gap: 12px; }
 }

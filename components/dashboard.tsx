@@ -55,19 +55,15 @@ export default function Dashboard({ data }: {
     const indexes = useMemo(() => unique(records.map(row => row.index)).sort(), [records]);
     const years = useMemo(() => { const values = records.map(row => row.year); const first = Math.min(...values); return Array.from({ length: Math.max(...values) - first + 1 }, (_, i) => first + i); }, [records]);
     const [filters, setFilters] = useState<FilterValues>({ ...DEFAULT_FILTERS });
-    const [yearRangeCustomized, setYearRangeCustomized] = useState(false);
-    const addedYearBounds = useMemo(() => {
-      const addedYears = records.filter(row => row.recordKey.startsWith("added-")).map(row => row.year);
-      return addedYears.length ? { start: Math.min(...addedYears), end: Math.max(...addedYears) } : null;
-    }, [records]);
+    const latestPublicationYear = useMemo(() => Math.max(DEFAULT_FILTERS.end, ...records.map(row => row.year)), [records]);
+    const [publicationYearRange, setPublicationYearRange] = useState({ start: DEFAULT_FILTERS.start, end: DEFAULT_FILTERS.end });
+    const [publicationYearRangeCustomized, setPublicationYearRangeCustomized] = useState(false);
     useEffect(() => {
-      if (yearRangeCustomized || !addedYearBounds) return;
-      setFilters(current => ({
-        ...current,
-        start: Math.min(current.start, addedYearBounds.start),
-        end: Math.max(current.end, addedYearBounds.end),
-      }));
-    }, [addedYearBounds, yearRangeCustomized]);
+      if (publicationYearRangeCustomized) return;
+      setPublicationYearRange(current => current.end < latestPublicationYear
+        ? { ...current, end: latestPublicationYear }
+        : current);
+    }, [latestPublicationYear, publicationYearRangeCustomized]);
     const [selected, setSelected] = useState(() => new Set(roster));
     useEffect(() => {
       const addedAuthors = records.filter(row => row.recordKey.startsWith("added-")).map(row => row.name);
@@ -83,7 +79,10 @@ export default function Dashboard({ data }: {
     function selectFaculty(names: Set<string>) { setSelected(names); setChartFilter({}); }
     const raw = useMemo(() => filterRecords(records, filters, selected), [records, filters, selected]);
     const works = useMemo(() => countWorks(raw, filters.count), [raw, filters.count]);
-    const visible = useMemo(() => orderWorks(searchWorks(works.filter(work => (!topic || (topic === "unclassified" ? !researchTopics(work.detail).length : researchTopics(work.detail).includes(topic))) && (!chartFilter.author || work.authors.includes(chartFilter.author)) && (!chartFilter.year || work.year === chartFilter.year) && (!chartFilter.type || work.type === chartFilter.type) && (!chartFilter.programme || work.programmes.some(programme => programmeChartGroup(programme) === chartFilter.programme))), query, -1), sort), [works, query, sort, chartFilter, topic]);
+    const publicationFilters = useMemo(() => ({ ...filters, ...publicationYearRange }), [filters, publicationYearRange]);
+    const publicationRaw = useMemo(() => filterRecords(records, publicationFilters, selected), [records, publicationFilters, selected]);
+    const publicationWorks = useMemo(() => countWorks(publicationRaw, filters.count), [publicationRaw, filters.count]);
+    const publicationVisible = useMemo(() => orderWorks(searchWorks(publicationWorks.filter(work => (!topic || (topic === "unclassified" ? !researchTopics(work.detail).length : researchTopics(work.detail).includes(topic))) && (!chartFilter.author || work.authors.includes(chartFilter.author)) && (!chartFilter.year || work.year === chartFilter.year) && (!chartFilter.type || work.type === chartFilter.type) && (!chartFilter.programme || work.programmes.some(programme => programmeChartGroup(programme) === chartFilter.programme))), query, -1), sort), [publicationWorks, query, sort, chartFilter, topic]);
     const scopus = works.filter(work => (work.indexes ?? [work.index]).some(index => /scopus/i.test(index))).length;
     const statistics = [
         { title: t("ผลงานทางวิชาการ"), value: works.length, note: filters.count === "unique" ? t("ผลงานไม่ซ้ำตามข้อความรายละเอียด") : t("รายการที่บันทึกแยกตามอาจารย์") },
@@ -92,12 +91,9 @@ export default function Dashboard({ data }: {
         { title: t("ประเภทผลงาน"), value: unique(raw.map(row => row.type)).length, note: t("วารสารและการประชุมวิชาการ") },
     ];
     function reset() {
-      setYearRangeCustomized(false);
-      setFilters({
-        ...DEFAULT_FILTERS,
-        start: Math.min(DEFAULT_FILTERS.start, addedYearBounds?.start ?? DEFAULT_FILTERS.start),
-        end: Math.max(DEFAULT_FILTERS.end, addedYearBounds?.end ?? DEFAULT_FILTERS.end),
-      });
+      setFilters({ ...DEFAULT_FILTERS });
+      setPublicationYearRange({ start: DEFAULT_FILTERS.start, end: latestPublicationYear });
+      setPublicationYearRangeCustomized(false);
       setSelected(new Set(roster)); setGroup("total"); setQuery(""); setSort("newest"); setTopic(""); setChartFilter({});
     }
     return <>
@@ -121,7 +117,7 @@ export default function Dashboard({ data }: {
         <circle cx="274" cy="102" r="5" fill="#c63141"/>
         <circle cx="143" cy="28" r="4" fill="#84bccd"/>
       </svg></section>
-      <Filters filters={filters} years={years} programmes={programmes} indexes={indexes} staff={staff} selected={selected} onChange={next => { if (next.start !== filters.start || next.end !== filters.end) setYearRangeCustomized(true); setFilters(next); setChartFilter({}); }} onSelect={selectFaculty} onReset={reset}/>
+      <Filters filters={filters} years={years} programmes={programmes} indexes={indexes} staff={staff} selected={selected} onChange={next => { setFilters(next); setChartFilter({}); }} onSelect={selectFaculty} onReset={reset}/>
       <DataGuide /><div className="stats" aria-live="polite">{statistics.map(stat => <div className="stat" key={stat.title}><label>{stat.title}</label><strong>{stat.value.toLocaleString("en-US")}</strong><small>{stat.note}</small></div>)}</div>
       <p className="chart-hint">{t("กดแท่งกราฟหรือส่วนของกราฟวงกลมเพื่อกรองรายการผลงานด้านล่าง")}</p>
       <div className="charts"><section className="card trend"><div className="cardhead"><div><h2>{t("แนวโน้มผลงานทางวิชาการ")}</h2><p>{t("จำนวนผลงานในแต่ละปีตามตัวกรองที่เลือก")}</p></div><select value={group} onChange={e => setGroup(e.target.value as GroupMode)} aria-label={t("แยกกราฟตาม")}><option value="total">{t("ผลงานรวม")}</option><option value="type">{t("แยกตามประเภท")}</option><option value="programme">{t("แยกตามหลักสูตร")}</option></select></div><TrendChart records={raw} start={filters.start} end={filters.end} mode={filters.count} group={group} onSelect={(year, type, programme) => selectChart(year, type, programme)}/></section>
@@ -130,7 +126,7 @@ export default function Dashboard({ data }: {
         <section className="card"><div className="cardhead"><div><h2>{t("ผลงานตามหลักสูตร")}</h2><p>{t("ผลงานหนึ่งชิ้นอาจเกี่ยวข้องกับหลายหลักสูตร")}</p></div></div><RankedBars values={groupedProgrammeCounts(raw, filters.count)} onSelect={programme => selectChart(undefined, undefined, programme)}/></section></div>
       <FacultyDirectory data={effectiveData} portraits={portraits}/>
       {Object.keys(chartFilter).some(key => chartFilter[key as keyof typeof chartFilter]) && <div className="chart-filter" role="status"><span>{t("ตารางกรองจากกราฟ:")} {[chartFilter.year && yearLabel(chartFilter.year), chartFilter.type && t(TYPE_LABELS[chartFilter.type]), chartFilter.programme && programmeLabel(chartFilter.programme), chartFilter.author].filter(Boolean).join(" · ")}</span><button onClick={() => setChartFilter({})}>{t("ล้างตัวกรองจากกราฟ")}</button></div>}
-      <PublicationTable topic={topic} onTopicChange={setTopic} type={filters.type} onTypeChange={type => { setFilters(current => ({ ...current, type })); setChartFilter({}); }} works={visible} query={query} onSearch={setQuery} sort={sort} onSort={setSort} staff={staff} selected={selected} onSelect={selectFaculty}/>
+      <PublicationTable topic={topic} onTopicChange={setTopic} type={filters.type} onTypeChange={type => { setFilters(current => ({ ...current, type })); setChartFilter({}); }} years={years} yearRange={publicationYearRange} onYearRangeChange={next => { setPublicationYearRange(next); setPublicationYearRangeCustomized(true); }} works={publicationVisible} query={query} onSearch={setQuery} sort={sort} onSort={setSort} staff={staff} selected={selected} onSelect={selectFaculty}/>
       <section className="source" id="sources">
         <b>{t("เกี่ยวกับข้อมูลและวิธีนับ")}</b>
         <p>{t("ข้อมูลจากไฟล์ผลงานและรายชื่อหลักสูตร ณ ตุลาคม 2025 รวม {0} รายการ และอาจารย์ในรายชื่อหลัก {1} คน", data.publications.length, data.staff.length)}</p>
