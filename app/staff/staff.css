@@ -50,6 +50,13 @@
 .staff-optional-fields summary { width:max-content; color:#375a71; font-size:12px; font-weight:600; cursor:pointer; }
 .staff-optional-fields summary::marker { color:#0a8490; }
 .staff-optional-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:17px 0 2px; }
+.staff-author-programme-fields > p { margin:10px 0 0; }
+.staff-author-programme-list { display:grid; gap:8px; max-height:270px; overflow:auto; margin:12px 0 2px; padding:2px; }
+.staff-author-programme { display:grid; gap:8px; min-width:0; margin:0; padding:10px 12px; border:1px solid #e1eaf0; border-radius:10px; background:#fafcfd; }
+.staff-author-programme legend { padding:0 5px; color:#31556c; font-size:11px; font-weight:600; }
+.staff-author-programme .staff-programme-options { gap:7px; }
+.staff-page .staff-author-programme .staff-programme-options label { min-height:34px; padding:0 10px; font-size:11px; }
+.staff-programme-empty { margin:10px 0 0; color:#718898; font-size:11px; }
 .staff-form-actions { display:flex; justify-content:flex-end; gap:10px; padding-top:3px; }
 .staff-secondary { min-height:43px; padding:0 15px; border:1px solid #d4e2ea; border-radius:9px; color:#46657b; background:#fff; font:inherit; font-size:12px; cursor:pointer; }
 .staff-secondary:hover:not(:disabled) { border-color:#9ecfd5; color:#08737c; background:#f8fcfd; }

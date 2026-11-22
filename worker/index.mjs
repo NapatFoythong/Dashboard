@@ -42,6 +42,13 @@ async function handleStaff(request, env, url) {
     const text = await request.text();
     if (text.length > 64 * 1024) return json({ detail: 'Request is too large' }, 413);
     try { body = JSON.parse(text); } catch { return json({ detail: 'Invalid JSON' }, 400); }
+    const programmeAssignments = body?.programmes ?? {};
+    const authorNames = new Set(Array.isArray(body?.authors) ? body.authors.map(name => typeof name === 'string' ? name.trim() : '') : []);
+    const validProgrammeAssignments = programmeAssignments && typeof programmeAssignments === 'object' && !Array.isArray(programmeAssignments)
+      && Object.entries(programmeAssignments).length <= 30
+      && Object.entries(programmeAssignments).every(([name, programmes]) => typeof name === 'string' && authorNames.has(name.trim())
+        && Array.isArray(programmes) && programmes.length <= PROGRAMMES.size
+        && programmes.every(programme => PROGRAMMES.has(programme)) && new Set(programmes).size === programmes.length);
     if (!body || !Array.isArray(body.authors) || body.authors.length < 1 || body.authors.length > 30
       || body.authors.some(name => typeof name !== 'string' || name.trim().length < 2 || name.length > 160)
       || typeof body.detail !== 'string' || body.detail.trim().length < 5 || body.detail.length > 5000
@@ -50,13 +57,20 @@ async function handleStaff(request, env, url) {
       || !Number.isInteger(body.month) || body.month < 1 || body.month > 12
       || typeof body.index !== 'string' || body.index.length > 160
       || !['', 'Y', 'N'].includes(body.psu)
-      || new Set(body.authors.map(name => name.trim())).size !== body.authors.length) {
+      || new Set(body.authors.map(name => name.trim())).size !== body.authors.length
+      || !validProgrammeAssignments) {
       return json({ detail: 'Invalid publication fields' }, 400);
     }
     const ids = body.authors.map(() => crypto.randomUUID());
     const statements = body.authors.map((name, index) => env.DB.prepare(
       'INSERT INTO staff_publications (id, name, type, detail, year, month, index_name, psu) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     ).bind(ids[index], name.trim(), body.type, body.detail.trim(), body.year, body.month, body.index.trim(), body.psu));
+    for (const [facultyName, programmes] of Object.entries(programmeAssignments)) {
+      statements.push(env.DB.prepare(`INSERT INTO staff_programmes (faculty_name, programmes_json, updated_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(faculty_name) DO UPDATE SET programmes_json = excluded.programmes_json, updated_at = CURRENT_TIMESTAMP`)
+        .bind(facultyName.trim(), JSON.stringify(programmes)));
+    }
     await env.DB.batch(statements);
     return json({ ids }, 201);
   }

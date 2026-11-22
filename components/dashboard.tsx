@@ -24,10 +24,22 @@ export default function Dashboard({ data }: {
     const [overlay, setOverlay] = useState<PublicationOverlay>(EMPTY_PUBLICATION_OVERLAY);
     useEffect(() => {
       let alive = true;
-      fetch("/api/publications", { cache: "no-store" }).then(response => response.ok ? response.json() : null)
-        .then(value => { if (alive && value) setOverlay(parsePublicationOverlay(value)); })
-        .catch(() => { /* Static CSV data remains available when D1 has not been configured. */ });
-      return () => { alive = false; };
+      let lastRefresh = 0;
+      const refreshOverlay = () => {
+        if (!alive || Date.now() - lastRefresh < 1000) return;
+        lastRefresh = Date.now();
+        fetch("/api/publications", { cache: "no-store" }).then(response => response.ok ? response.json() : null)
+          .then(value => { if (alive && value) setOverlay(parsePublicationOverlay(value)); })
+          .catch(() => { /* Static CSV data remains available when D1 has not been configured. */ });
+      };
+      refreshOverlay();
+      window.addEventListener("focus", refreshOverlay);
+      document.addEventListener("visibilitychange", refreshOverlay);
+      return () => {
+        alive = false;
+        window.removeEventListener("focus", refreshOverlay);
+        document.removeEventListener("visibilitychange", refreshOverlay);
+      };
     }, []);
     const records = useMemo(() => mergePublications(data, overlay), [data, overlay]);
     const staff = useMemo(() => unique([...data.staff.map(person => canonicalFacultyName(person.name)), ...records.map(row => row.name)]).sort(), [data, records]);

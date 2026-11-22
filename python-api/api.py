@@ -104,13 +104,18 @@ class StaffPublication(BaseModel):
     month: int = Field(ge=1, le=12)
     index: str = Field(default="", max_length=160)
     psu: Literal["", "Y", "N"] = ""
+    programmes: dict[str, list[Literal["AISE", "DE", "COMP", "Dbiz"]]] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_authors(self):
         cleaned = [name.strip() for name in self.authors]
         if any(len(name) < 2 or len(name) > 160 for name in cleaned) or len(set(cleaned)) != len(cleaned):
             raise ValueError("Authors must be unique valid names")
+        programme_assignments = {faculty.strip(): values for faculty, values in self.programmes.items()}
+        if any(faculty not in cleaned or len(set(values)) != len(values) for faculty, values in programme_assignments.items()):
+            raise ValueError("Programme assignments must belong to selected authors and be unique")
         self.authors = cleaned
+        self.programmes = programme_assignments
         self.detail = self.detail.strip()
         return self
 

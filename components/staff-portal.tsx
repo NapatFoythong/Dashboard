@@ -54,17 +54,18 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
   const [month, setMonth] = useState(10);
   const [index, setIndex] = useState("");
   const [psu, setPsu] = useState("");
+  const [programmeSelections, setProgrammeSelections] = useState<Record<string, Programme[]>>({});
   const faculty = useMemo(() => unique([
     ...data.staff.map(person => normalizeFacultyName(person.name)),
     ...data.publications.map(row => normalizeFacultyName(row.name)),
   ]).sort(compareText), []);
-  const [selectedFaculty, setSelectedFaculty] = useState(faculty[0] ?? "");
-  const [programmeSelection, setProgrammeSelection] = useState<Programme[]>([]);
   useEffect(() => { setMonth(new Date().getMonth() + 1); }, []);
 
   async function refreshOverlay() {
     const value = await jsonRequest("/api/publications");
-    setOverlay(parsePublicationOverlay(value));
+    const next = parsePublicationOverlay(value);
+    setOverlay(next);
+    return next;
   }
 
   useEffect(() => {
@@ -109,10 +110,27 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
   const matchingFaculty = faculty.filter(name => name.toLowerCase().includes(authorSearch.trim().toLowerCase()));
   const allMatchingFacultySelected = matchingFaculty.length > 0 && matchingFaculty.every(name => authors.includes(name));
 
-  useEffect(() => {
-    const defaultProgrammes = data.staff.find(person => normalizeFacultyName(person.name) === selectedFaculty)?.programmes ?? [];
-    setProgrammeSelection(canonicalProgrammes(overlay.programmes[selectedFaculty] ?? defaultProgrammes));
-  }, [selectedFaculty, overlay.programmes]);
+  function programmesForAuthor(name: string): Programme[] {
+    const key = normalizeFacultyName(name);
+    if (Object.prototype.hasOwnProperty.call(programmeSelections, key)) return programmeSelections[key];
+    const defaultProgrammes = data.staff.find(person => normalizeFacultyName(person.name) === key)?.programmes ?? [];
+    return canonicalProgrammes(overlay.programmes[key] ?? defaultProgrammes);
+  }
+
+  function staffRequestError(cause: unknown, fallback: string): string {
+    const message = cause instanceof Error ? cause.message : fallback;
+    const knownErrors: Record<string, string> = {
+      "Staff sign-in required": "เซสชันเจ้าหน้าที่หมดอายุ กรุณาเข้าสู่ระบบใหม่",
+      "Unauthorized": "ระบบยืนยันสิทธิ์บันทึกกับ Cloudflare ไม่ผ่าน กรุณาตรวจ STAFF_API_TOKEN ใน Vercel และ Cloudflare ว่าตรงกัน",
+      "Staff API token is not configured": "ยังไม่ได้ตั้ง STAFF_API_TOKEN ใน Vercel",
+      "Cloudflare D1 API is not configured": "ยังไม่ได้ตั้ง URL ของ Cloudflare Worker ใน Vercel",
+      "D1 database is not configured": "Cloudflare Worker ยังไม่ได้เชื่อมฐานข้อมูล D1",
+      "Cloudflare D1 API unavailable": "เชื่อมต่อ Cloudflare D1 ไม่สำเร็จ ลองใหม่ภายหลัง",
+      "Staff data operation failed": "บันทึกข้อมูลลง D1 ไม่สำเร็จ กรุณาตรวจการตั้งค่า Worker และ D1",
+      "Invalid publication fields": "ข้อมูลผลงานหรือหลักสูตรไม่ถูกต้อง กรุณาตรวจช่องที่กรอกแล้วลองใหม่",
+    };
+    return knownErrors[message] ? t(knownErrors[message]) : message;
+  }
 
   async function login(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
@@ -138,9 +156,19 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
     if (!Number.isInteger(enteredYear) || yearCE < 1900 || yearCE > 2200) { setError(t("กรุณาระบุปี ค.ศ. หรือ พ.ศ. ให้ถูกต้อง")); setBusy(false); return; }
     if (detail.trim().length < 5) { setError(t("กรุณากรอกรายละเอียดผลงานอย่างน้อย 5 ตัวอักษร")); setBusy(false); return; }
     try {
-      const result = await jsonRequest("/api/staff/publications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ authors, type, detail: detail.trim(), year: yearCE, month, index: index.trim(), psu }) });
-      await refreshOverlay(); setDetail(""); setAuthors([]); setAuthorSearch(""); setPage(1); setSuccess(t("เพิ่มผลงานสำเร็จ {0} รายการ", result.ids?.length ?? authors.length));
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "เพิ่มผลงานไม่สำเร็จ"); }
+      const programmes = Object.fromEntries(authors.map(name => [normalizeFacultyName(name), programmesForAuthor(name)]));
+      const result = await jsonRequest("/api/staff/publications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ authors, type, detail: detail.trim(), year: yearCE, month, index: index.trim(), psu, programmes }) });
+      const savedIds: string[] = Array.isArray(result.ids) ? (result.ids as unknown[]).filter((id): id is string => typeof id === "string") : [];
+      setDetail(""); setAuthors([]); setAuthorSearch(""); setProgrammeSelections({}); setPage(1);
+      try {
+        const latest = await refreshOverlay();
+        const saved = savedIds.length > 0 && savedIds.every(id => latest.added.some(row => row.id === id));
+        if (saved) setSuccess(t("บันทึกผลงานและหลักสูตรแล้ว {0} รายการ", savedIds.length));
+        else setError(t("เซิร์ฟเวอร์รับข้อมูลแล้ว แต่ยังโหลดรายการที่บันทึกไม่ขึ้น กรุณารีเฟรชหน้า และอย่ากดเพิ่มซ้ำ"));
+      } catch {
+        setError(t("บันทึกผลงานแล้ว แต่โหลดรายการล่าสุดไม่ได้ กรุณารีเฟรชหน้า และอย่ากดเพิ่มซ้ำ"));
+      }
+    } catch (cause) { setError(staffRequestError(cause, "เพิ่มผลงานไม่สำเร็จ")); }
     finally { setBusy(false); }
   }
 
@@ -153,6 +181,7 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
     setMonth(new Date().getMonth() + 1);
     setIndex("");
     setPsu("");
+    setProgrammeSelections({});
     setError("");
     setSuccess("");
   }
@@ -178,15 +207,6 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
     setBusy(true); setError("");
     try { await jsonRequest(`/api/staff/publications/${encodeURIComponent(record.id)}/restore`, { method: "PUT" }); await refreshOverlay(); setSuccess("นำรายการกลับมาแสดงแล้ว"); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "คืนรายการไม่สำเร็จ"); }
-    finally { setBusy(false); }
-  }
-
-  async function saveProgrammes() {
-    setBusy(true); setError(""); setSuccess("");
-    try {
-      await jsonRequest("/api/staff/programmes", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ faculty: selectedFaculty, programmes: programmeSelection }) });
-      await refreshOverlay(); setSuccess("บันทึกสังกัดหลักสูตรแล้ว");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "บันทึกไม่สำเร็จ"); }
     finally { setBusy(false); }
   }
 
@@ -222,6 +242,21 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
           </div>
         </section>
 
+        <details className="staff-optional-fields staff-author-programme-fields">
+          <summary>{t("หลักสูตรของผู้เขียน (ไม่จำเป็น)")}</summary>
+          <p className="staff-help-text">{t("เลือกหลักสูตรให้ผู้เขียนแต่ละคน ระบบจะบันทึกพร้อมผลงาน")}</p>
+          {!authors.length ? <p className="staff-programme-empty">{t("เลือกผู้เขียนก่อน เพื่อกำหนดหลักสูตร")}</p> : <div className="staff-author-programme-list">
+            {authors.map(name => <fieldset className="staff-author-programme" key={name}>
+              <legend>{name}</legend>
+              <div className="staff-programme-options">{PROGRAMMES.map(programme => <label key={programme}><input type="checkbox" checked={programmesForAuthor(name).includes(programme)} onChange={event => {
+                const key = normalizeFacultyName(name);
+                const current = programmesForAuthor(name);
+                setProgrammeSelections(values => ({ ...values, [key]: event.target.checked ? canonicalProgrammes([...current, programme]) : current.filter(value => value !== programme) }));
+              }}/>{programme}</label>)}</div>
+            </fieldset>)}
+          </div>}
+        </details>
+
         <section className="staff-entry-section" aria-labelledby="staff-publication-heading">
           <div className="staff-entry-heading"><span className="staff-entry-number">2</span><div><h3 id="staff-publication-heading">{t("กรอกข้อมูลผลงาน")}</h3><p>{t("ใส่ข้อมูลอ้างอิงที่มี ใช้ DOI หรือ URL ได้ถ้ามี")}</p></div></div>
           <div className="staff-core-fields">
@@ -247,15 +282,7 @@ export default function StaffPortal({ mode, data }: { mode: Mode; data: Research
     </section>
 
     <section className="staff-card">
-      <div className="staff-card-head"><div><h2>{t("หลักสูตรของอาจารย์")}</h2><p>{t("กำหนดสังกัดที่ใช้จัดกลุ่มในกราฟและตัวกรอง")}</p></div><span className="staff-step">02</span></div>
-      <div className="staff-programme-editor"><label>{t("อาจารย์")}<select value={selectedFaculty} onChange={event => setSelectedFaculty(event.target.value)}>{faculty.map(name => <option value={name} key={name}>{name}</option>)}</select></label>
-        <div className="staff-programme-options">{PROGRAMMES.map(programme => <label key={programme}><input type="checkbox" checked={programmeSelection.includes(programme)} onChange={event => setProgrammeSelection(current => event.target.checked ? [...current, programme] : current.filter(value => value !== programme))}/>{programme}</label>)}</div>
-        <button className="staff-primary" disabled={busy} onClick={saveProgrammes}>{t("บันทึกหลักสูตร")}</button>
-      </div>
-    </section>
-
-    <section className="staff-card">
-      <div className="staff-card-head"><div><h2>{t("รายการผลงาน")}</h2><p>{t("ค้นหาเพื่อเลือกซ่อนรายการต้นฉบับ หรือลบรายการที่เพิ่มเข้ามา")}</p></div><span className="staff-step">03</span></div>
+      <div className="staff-card-head"><div><h2>{t("รายการผลงาน")}</h2><p>{t("ค้นหาเพื่อเลือกซ่อนรายการต้นฉบับ หรือลบรายการที่เพิ่มเข้ามา")}</p></div><span className="staff-step">02</span></div>
       <div className="staff-list-tools"><input value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder={t("ค้นหาชื่อผลงาน อาจารย์ หรือเดือน…")}/><label className="staff-inline-check"><input type="checkbox" checked={showHidden} onChange={event => { setShowHidden(event.target.checked); setPage(1); }}/>{t("แสดงรายการที่ซ่อนไว้")}</label><span>{filteredRecords.length.toLocaleString()} {t("รายการ")}</span></div>
       <div className="staff-record-list">{visibleRecords.map(record => <article className={`staff-record${record.hidden ? " is-hidden" : ""}`} key={record.id}>
         <div className="staff-record-date">{language === "th" ? record.year + 543 : record.year}<small>{(language === "th" ? MONTHS_TH : MONTHS_EN)[record.month - 1]} · {record.source === "source" ? t("ไฟล์ต้นฉบับ") : t("เพิ่มโดย staff")}</small></div>
